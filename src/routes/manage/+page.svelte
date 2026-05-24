@@ -8,7 +8,7 @@
   let holidays: HolidayRecord[] = $state([])
   let leaves: LeaveRecord[] = $state([])
   let users: ExportUser[] = $state([])
-  let allUsers = $state<{ discordId: string; username: string; active: boolean; lastAccess: string | null }[]>([])
+  let allUsers = $state<{ discordId: string; username: string; type: string; active: boolean; lastAccess: string | null }[]>([])
   let loading = $state(true)
   let message = $state('')
 
@@ -20,6 +20,16 @@
   let newLeaveType = $state('SL')
 
   let restDayEdit: Record<string, string> = $state({})
+  let userSearch = $state('')
+  let userTypeFilter = $state('all')
+
+  const filteredUsers = $derived(
+    allUsers.filter((u) => {
+      if (userTypeFilter !== 'all' && u.type !== userTypeFilter) return false
+      if (userSearch && !u.username?.toLowerCase().includes(userSearch.toLowerCase())) return false
+      return true
+    })
+  )
 
   function weekRange(): { from: string; to: string } {
     const today = new Date()
@@ -251,17 +261,27 @@
     <div class="panel">
       <h2>All Users</h2>
       <p class="hint">Manage user access. Deactivate former employees, reactivate returning ones.</p>
-      {#if allUsers.length === 0}
-        <div class="empty">No users found.</div>
+      <div class="user-filters">
+        <input type="text" bind:value={userSearch} placeholder="Search by name..." />
+        <select bind:value={userTypeFilter}>
+          <option value="all">All Types</option>
+          <option value="employee">Employee</option>
+          <option value="intern">Intern</option>
+        </select>
+        <span class="user-count">{filteredUsers.length} users</span>
+      </div>
+      {#if filteredUsers.length === 0}
+        <div class="empty">No users match your filter.</div>
       {:else}
         <table class="list">
           <thead>
-            <tr><th>User</th><th>Status</th><th>Last Access</th><th></th></tr>
+            <tr><th>User</th><th>Type</th><th>Status</th><th>Last Access</th><th></th></tr>
           </thead>
           <tbody>
-            {#each allUsers as u}
+            {#each filteredUsers as u}
               <tr>
                 <td>{u.username || u.discordId}</td>
+                <td style="text-transform:capitalize">{u.type}</td>
                 <td>
                   <span class="badge" class:badge-active={u.active} class:badge-inactive={!u.active}>
                     {u.active ? 'Active' : 'Inactive'}
@@ -323,4 +343,8 @@
   .badge-el { background: #fff3e0; color: #e65100; }
   .badge-bdl { background: #e3f2fd; color: #1565c0; }
   .badge-ob { background: #f3e5f5; color: #7b1fa2; }
+  .user-filters { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
+  .user-filters input { flex: 1; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+  .user-filters select { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+  .user-count { font-size: 12px; color: #888; white-space: nowrap; }
 </style>
