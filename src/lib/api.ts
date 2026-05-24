@@ -1,87 +1,85 @@
-import type { UserAttendance, AttendanceEntry } from './types';
+import type { ExportData, LeaveRecord, HolidayRecord } from '$lib/types'
 
-function fmt(d: Date): string {
-  return d.toISOString().split('T')[0];
+const BASE = '/api'
+
+export async function fetchAttendance(from: string, to: string, type: string): Promise<ExportData> {
+  const res = await fetch(`${BASE}/export/data?from=${from}&to=${to}&type=${type}`)
+  if (!res.ok) throw new Error('Failed to fetch attendance data')
+  return res.json()
 }
 
-function getWeekRange(): { from: string; to: string } {
-  const today = new Date();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  return { from: fmt(monday), to: fmt(sunday) };
+export async function setName(discordId: string, username: string): Promise<void> {
+  await fetch(`${BASE}/set-name`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordId, username }),
+  })
 }
 
-function parseUsername(username: string): { surname: string; givenName: string } {
-  const commaIdx = username.indexOf(',');
-  if (commaIdx > -1) {
-    return { surname: username.substring(0, commaIdx).trim(), givenName: username.substring(commaIdx + 1).trim() };
-  }
-  const spaceIdx = username.indexOf(' ');
-  if (spaceIdx > -1) {
-    return { surname: username.substring(0, spaceIdx).trim(), givenName: username.substring(spaceIdx + 1).trim() };
-  }
-  return { surname: '', givenName: username };
+export async function setRestDay(discordId: string, restDay: string | null): Promise<void> {
+  await fetch(`${BASE}/set-rest-day`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordId, restDay }),
+  })
+}
+
+export async function listHolidays(): Promise<HolidayRecord[]> {
+  const res = await fetch(`${BASE}/holidays`)
+  if (!res.ok) throw new Error('Failed to fetch holidays')
+  return res.json()
+}
+
+export async function upsertHoliday(date: string, name: string): Promise<void> {
+  await fetch(`${BASE}/holidays`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date, name }),
+  })
+}
+
+export async function removeHoliday(date: string): Promise<void> {
+  await fetch(`${BASE}/holidays?date=${date}`, { method: 'DELETE' })
+}
+
+export async function listLeaves(from?: string, to?: string): Promise<LeaveRecord[]> {
+  const params = new URLSearchParams()
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  const res = await fetch(`${BASE}/leaves?${params}`)
+  if (!res.ok) throw new Error('Failed to fetch leaves')
+  return res.json()
+}
+
+export async function upsertLeave(discordId: string, date: string, type: string, note?: string): Promise<void> {
+  await fetch(`${BASE}/leaves`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordId, date, type, note }),
+  })
+}
+
+export async function removeLeave(discordId: string, date: string): Promise<void> {
+  await fetch(`${BASE}/leaves?discordId=${discordId}&date=${date}`, { method: 'DELETE' })
 }
 
 export function generateDates(from: string, to: string): string[] {
-  const dates: string[] = [];
-  const current = new Date(from + 'T00:00:00');
-  const end = new Date(to + 'T00:00:00');
+  const dates: string[] = []
+  const current = new Date(from + 'T00:00:00')
+  const end = new Date(to + 'T00:00:00')
   while (current <= end) {
-    dates.push(fmt(current));
-    current.setDate(current.getDate() + 1);
+    dates.push(current.toISOString().split('T')[0])
+    current.setDate(current.getDate() + 1)
   }
-  return dates;
+  return dates
 }
 
-export function dayLabel(dateStr: string): string {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' });
+export function getWeekRange(): { from: string; to: string } {
+  const today = new Date()
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const fmt = (d: Date) => d.toISOString().split('T')[0]
+  return { from: fmt(monday), to: fmt(sunday) }
 }
-
-export async function fetchAttendance(
-  from?: string,
-  to?: string,
-  type: string = 'employee',
-): Promise<UserAttendance[]> {
-  const range = getWeekRange();
-  const fromDate = from || range.from;
-  const toDate = to || range.to;
-
-  const params = new URLSearchParams({ from: fromDate, to: toDate, type });
-  const res = await fetch(`/api/export/data?${params}`);
-  if (!res.ok) throw new Error('Failed to fetch attendance data');
-  const data = await res.json() as { records: any[]; users: any[] };
-
-  const dates = generateDates(fromDate, toDate);
-  const recordMap = new Map<string, Map<string, { timeIn: string; timeOut: string }>>();
-  for (const r of data.records) {
-    if (!recordMap.has(r.discordUserId)) {
-      recordMap.set(r.discordUserId, new Map());
-    }
-    const userDates = recordMap.get(r.discordUserId)!;
-    const dateKey = r.signatureDate || '';
-    const timeIn = r.timeIn
-      ? new Date(r.timeIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-      : '';
-    const timeOut = r.timeOut
-      ? new Date(r.timeOut).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-      : '';
-    userDates.set(dateKey, { timeIn, timeOut });
-  }
-
-  return data.users.map((user: any) => {
-    const { surname, givenName } = parseUsername(user.username);
-    const userDates = recordMap.get(user.discordId) || new Map();
-    const days: AttendanceEntry[] = dates.map((date) => {
-      const entry = userDates.get(date);
-      return { date, dayLabel: dayLabel(date), timeIn: entry?.timeIn || '', timeOut: entry?.timeOut || '', present: !!entry };
-    });
-    const totalPresent = days.filter((d) => d.present).length;
-    const totalAbsent = dates.length - totalPresent;
-    return { discordId: user.discordId, username: user.username, surname, givenName, days, totalPresent, totalAbsent };
-  });
-}
-
-export { getWeekRange };

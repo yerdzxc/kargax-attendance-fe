@@ -1,14 +1,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { UserAttendance } from '$lib/types';
+  import type { UserAttendance, AttendanceEntry, ExportData } from '$lib/types';
   import { fetchAttendance, generateDates, getWeekRange } from '$lib/api';
   import SummaryCards from '$lib/components/SummaryCards.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
   import AttendanceTable from '$lib/components/AttendanceTable.svelte';
 
   let users: UserAttendance[] = $state([]);
+  let filteredUsers: UserAttendance[] = $state([]);
   let dates: string[] = $state([]);
   let loading = $state(true);
+  let absentLoading = $state(false);
 
   let from = $state('');
   let to = $state('');
@@ -16,22 +18,176 @@
   let search = $state('');
   let error = $state('');
 
+  let showAbsent = $state(false);
+  let viewMode = $state<'weekly' | 'monthly'>('weekly');
+
+  function getDayOfWeek(dateStr: string): string {
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })
+  }
+
+  function parseTime(t: string | null): { h: number; m: number } | null {
+    if (!t) return null
+    const parts = t.split(':')
+    if (parts.length < 2) return null
+    return { h: parseInt(parts[0], 10), m: parseInt(parts[1], 10) }
+  }
+
+  function isLate(timeIn: string | null): boolean {
+    const t = parseTime(timeIn)
+    if (!t) return false
+    return t.h > 9 || (t.h === 9 && t.m > 0)
+  }
+
+  function isOvertime(timeOut: string | null): boolean {
+    const t = parseTime(timeOut)
+    if (!t) return false
+    return t.h > 18 || (t.h === 18 && t.m > 0)
+  }
+
+  function processExportData(data: ExportData, dateList: string[]): UserAttendance[] {
+    const leaveMap = new Map<string, Map<string, string>>()
+    for (const l of data.leaves) {
+      if (!leaveMap.has(l.discordUserId)) leaveMap.set(l.discordUserId, new Map())
+      leaveMap.get(l.discordUserId)!.set(l.date, l.type)
+    }
+
+    const holidaySet = new Set<string>()
+    const holidayNames = new Map<string, string>()
+    for (const h of data.holidays) {
+      holidaySet.add(h.date)
+      holidayNames.set(h.date, h.name)
+    }
+
+    const recordMap = new Map<string, Map<string, { timeIn: string | null; timeOut: string | null }>>()
+    for (const r of data.records) {
+      if (!r.signatureDate) continue
+      if (!recordMap.has(r.discordUserId)) recordMap.set(r.discordUserId, new Map())
+      recordMap.get(r.discordUserId)!.set(r.signatureDate, { timeIn: r.timeIn, timeOut: r.timeOut })
+    }
+
+    function parseName(username: string): { surname: string; givenName: string } {
+      const commaIdx = username.indexOf(',')
+      if (commaIdx > -1) {
+        return { surname: username.substring(0, commaIdx).trim(), givenName: username.substring(commaIdx + 1).trim() }
+      }
+      const spaceIdx = username.lastIndexOf(' ')
+      if (spaceIdx > -1) {
+        return { surname: username.substring(spaceIdx + 1).trim(), givenName: username.substring(0, spaceIdx).trim() }
+      }
+      return { surname: '', givenName: username }
+    }
+
+    return data.users.map((u) => {
+      const userRecords = recordMap.get(u.discordId) || new Map()
+      const userLeaves = leaveMap.get(u.discordId) || new Map()
+      const nameParts = parseName(u.username)
+
+      let totalPresent = 0
+      let totalAbsent = 0
+
+      const days: AttendanceEntry[] = dateList.map((date) => {
+        const rec = userRecords.get(date)
+        const dayOfWeek = getDayOfWeek(date)
+        const isRestDay = u.restDay?.toLowerCase() === dayOfWeek.toLowerCase()
+        const isHoliday = holidaySet.has(date)
+        const leaveType = userLeaves.get(date)
+
+        let present = false
+        let status: AttendanceEntry['status'] = 'absent'
+
+        if (leaveType) {
+          status = 'leave'
+        } else if (isHoliday) {
+          status = 'holiday'
+        } else if (isRestDay) {
+          status = 'restday'
+        } else if (rec) {
+          present = true
+          status = isLate(rec.timeIn) ? 'late' : 'present'
+        }
+
+        if (present) totalPresent++
+        else if (status === 'absent') totalAbsent++
+
+        return {
+          date,
+          dayLabel: dayOfWeek.substring(0, 3),
+          timeIn: rec?.timeIn || '',
+          timeOut: rec?.timeOut || '',
+          present,
+          status,
+          leaveType,
+          holidayName: isHoliday ? holidayNames.get(date) : undefined,
+          overtime: rec ? isOvertime(rec.timeOut) : false,
+          noTimeOut: rec ? !rec.timeOut : false,
+        }
+      })
+
+      return {
+        discordId: u.discordId,
+        username: u.username,
+        ...nameParts,
+        restDay: u.restDay,
+        days,
+        totalPresent,
+        totalAbsent,
+      }
+    })
+  }
+
   async function load() {
     loading = true;
     error = '';
     try {
-      users = await fetchAttendance(from, to, type);
-      dates = generateDates(from, to);
+      const raw = await fetchAttendance(from, to, type) as ExportData;
+      const dateList = generateDates(from, to);
+      users = processExportData(raw, dateList);
+      filteredUsers = filterUsers(users, search);
+      dates = dateList;
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load data';
       users = [];
+      filteredUsers = [];
       dates = [];
     } finally {
       loading = false;
     }
   }
 
-  function handleSearch(v: string) { search = v; }
+  function setWeekly() {
+    viewMode = 'weekly'
+    const range = getWeekRange()
+    from = range.from
+    to = range.to
+    load()
+  }
+
+  function setMonthly() {
+    viewMode = 'monthly'
+    const today = new Date()
+    const first = new Date(today.getFullYear(), today.getMonth(), 1)
+    const last = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    const fmt = (d: Date) => d.toISOString().split('T')[0]
+    from = fmt(first)
+    to = fmt(last)
+    load()
+  }
+
+  function filterUsers(userList: UserAttendance[], query: string): UserAttendance[] {
+    if (!query) return userList
+    const q = query.toLowerCase()
+    return userList.filter(
+      (u) =>
+        u.username.toLowerCase().includes(q) ||
+        u.givenName.toLowerCase().includes(q) ||
+        u.surname.toLowerCase().includes(q),
+    )
+  }
+
+  function handleSearch(v: string) {
+    search = v;
+    filteredUsers = filterUsers(users, v);
+  }
 
   function handleTypeChange(v: string) {
     type = v;
@@ -45,25 +201,25 @@
   }
 
   function handleDownload() {
-    const range = getWeekRange();
-    const fromDate = from || range.from;
-    const toDate = to || range.to;
+    const fromDate = from;
+    const toDate = to;
     window.open(`/api/export?from=${fromDate}&to=${toDate}&type=${type}`, '_blank');
   }
 
-  const filteredUsers = $derived(
-    search
-      ? users.filter(
-          (u) =>
-            u.username.toLowerCase().includes(search.toLowerCase()) ||
-            u.givenName.toLowerCase().includes(search.toLowerCase()) ||
-            u.surname.toLowerCase().includes(search.toLowerCase()),
-        )
-      : users,
-  );
-
   const todayPresent = $derived(filteredUsers.filter((u) => u.days[0]?.present).length);
-  const todayAbsent = $derived(filteredUsers.length - todayPresent);
+  const todayAbsent = $derived(filteredUsers.filter((u) => u.days[0]?.status === 'absent').length);
+  const todayLeave = $derived(filteredUsers.filter((u) => u.days[0]?.status === 'leave').length);
+  const todayRest = $derived(filteredUsers.filter((u) => u.days[0]?.status === 'restday').length);
+  const todayHoliday = $derived(filteredUsers.filter((u) => u.days[0]?.status === 'holiday').length);
+
+  const absentUsers = $derived(
+    filteredUsers
+      .filter((u) => u.days.some((d) => d.status === 'absent'))
+      .map((u) => ({
+        ...u,
+        absentDates: u.days.filter((d) => d.status === 'absent').map((d) => d.date),
+      })),
+  );
 
   onMount(() => {
     const range = getWeekRange();
@@ -79,6 +235,13 @@
       <h1>Attendance Dashboard</h1>
       <p class="subtitle">KargaX — View and export attendance records</p>
     </div>
+    <div class="header-actions">
+      <div class="view-toggle">
+        <button class="toggle-btn" class:active={viewMode === 'weekly'} onclick={setWeekly}>Week</button>
+        <button class="toggle-btn" class:active={viewMode === 'monthly'} onclick={setMonthly}>Month</button>
+      </div>
+      <a href="/manage" class="manage-link">Manage</a>
+    </div>
   </header>
 
   <main class="main">
@@ -89,7 +252,14 @@
       </div>
     {/if}
 
-    <SummaryCards totalUsers={filteredUsers.length} totalPresent={todayPresent} totalAbsent={todayAbsent} />
+    <SummaryCards
+      totalUsers={filteredUsers.length}
+      totalPresent={todayPresent}
+      totalAbsent={todayAbsent}
+      totalLeave={todayLeave}
+      totalRest={todayRest}
+      totalHoliday={todayHoliday}
+    />
 
     <FilterBar
       {from} {to} {type} {search} {loading}
@@ -100,7 +270,32 @@
       onRefresh={load}
     />
 
-    <AttendanceTable users={filteredUsers} {dates} {loading} />
+    <div class="table-section">
+      <div class="section-header">
+        <h2>Attendance Table</h2>
+        <button class="toggle-absent" onclick={() => showAbsent = !showAbsent}>
+          {showAbsent ? 'Show All' : 'Absent List'} ({absentUsers.length})
+        </button>
+      </div>
+
+      {#if showAbsent}
+        <div class="absent-list">
+          <h3>Employees with Absences</h3>
+          {#if absentUsers.length === 0}
+            <div class="empty">No absences this period.</div>
+          {:else}
+            {#each absentUsers as u}
+              <div class="absent-item">
+                <span class="absent-name">{u.givenName || u.username} {u.surname}</span>
+                <span class="absent-dates">{u.absentDates.join(', ')}</span>
+              </div>
+            {/each}
+          {/if}
+        </div>
+      {/if}
+
+      <AttendanceTable users={filteredUsers} {dates} {loading} />
+    </div>
   </main>
 
   <footer class="footer">
@@ -112,12 +307,30 @@
   :global(*) { box-sizing: border-box; margin: 0; padding: 0; }
   :global(body) { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
   .app { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
   .header h1 { font-size: 22px; font-weight: 700; color: #1a1a2e; }
   .subtitle { font-size: 13px; color: #888; margin-top: 2px; }
+  .header-actions { display: flex; align-items: center; gap: 12px; }
+  .view-toggle { display: flex; gap: 0; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #ddd; }
+  .toggle-btn { padding: 6px 14px; border: none; background: white; font-size: 12px; font-weight: 600; color: #888; cursor: pointer; }
+  .toggle-btn.active { background: #5865f2; color: white; }
+  .manage-link { padding: 6px 14px; background: white; border: 1px solid #ddd; border-radius: 8px; font-size: 12px; font-weight: 600; color: #5865f2; text-decoration: none; }
+  .manage-link:hover { background: #f0f4ff; }
   .main { min-height: 60vh; }
   .error-banner { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; font-size: 13px; margin-bottom: 16px; }
   .error-banner button { padding: 6px 12px; background: #b91c1c; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; }
   .error-banner button:hover { background: #991b1b; }
+  .table-section { margin-top: 20px; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .section-header h2 { font-size: 16px; color: #333; }
+  .toggle-absent { padding: 6px 12px; background: white; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; font-weight: 600; color: #5865f2; cursor: pointer; }
+  .toggle-absent:hover { background: #f0f4ff; }
+  .absent-list { background: white; border: 1px solid #fee2e2; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .absent-list h3 { font-size: 14px; color: #b91c1c; margin-bottom: 12px; }
+  .empty { padding: 24px; text-align: center; color: #aaa; font-size: 13px; }
+  .absent-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+  .absent-item:last-child { border-bottom: none; }
+  .absent-name { font-weight: 500; color: #333; }
+  .absent-dates { color: #888; font-size: 12px; }
   .footer { text-align: center; padding: 32px 0 16px; font-size: 11px; color: #aaa; }
 </style>
