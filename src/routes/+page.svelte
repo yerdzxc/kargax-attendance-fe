@@ -219,7 +219,9 @@
   }
 
   const displayedUsers = $derived(
-    statusFilter === 'all' ? filteredUsers : filteredUsers.filter((u) => u.days[0]?.status === statusFilter)
+    statusFilter === 'all' ? filteredUsers
+    : statusFilter === 'absent' ? filteredUsers.filter((u) => !u.days.some((d) => d.present))
+    : filteredUsers.filter((u) => u.days.some((d) => d.status === statusFilter))
   )
 
   const todayPresent = $derived(displayedUsers.filter((u) => u.days[0]?.present).length);
