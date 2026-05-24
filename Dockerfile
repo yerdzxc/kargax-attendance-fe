@@ -9,10 +9,16 @@ COPY . .
 RUN npm run build
 
 # ---- Production Stage ----
-FROM nginx:stable-alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
+FROM node:22-alpine
+WORKDIR /app
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/build build/
+COPY --from=builder /app/package.json ./
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 3000
+
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
+CMD ["node", "build/index.js"]
