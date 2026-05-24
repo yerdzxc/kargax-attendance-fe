@@ -224,11 +224,12 @@
     : filteredUsers.filter((u) => u.days.some((d) => d.status === statusFilter))
   )
 
-  const todayPresent = $derived(displayedUsers.filter((u) => u.days[0]?.present).length);
-  const todayAbsent = $derived(displayedUsers.filter((u) => u.days[0]?.status === 'absent').length);
-  const todayLeave = $derived(displayedUsers.filter((u) => u.days[0]?.status === 'leave').length);
-  const todayRest = $derived(displayedUsers.filter((u) => u.days[0]?.status === 'restday').length);
-  const todayHoliday = $derived(displayedUsers.filter((u) => u.days[0]?.status === 'holiday').length);
+  const todayIdx = $derived(dates.indexOf(new Date().toISOString().split('T')[0]))
+  const todayPresent = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.present).length : 0);
+  const todayAbsent = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'absent').length : 0);
+  const todayLeave = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'leave').length : 0);
+  const todayRest = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'restday').length : 0);
+  const todayHoliday = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'holiday').length : 0);
 
   const absentUsers = $derived(
     displayedUsers
@@ -271,7 +272,7 @@
     {/if}
 
     <SummaryCards
-      totalUsers={displayedUsers.length}
+      totalUsers={users.length}
       totalPresent={todayPresent}
       totalAbsent={todayAbsent}
       totalLeave={todayLeave}
