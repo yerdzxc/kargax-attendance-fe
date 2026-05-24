@@ -89,6 +89,14 @@ export async function setUserActive(discordId: string, active: boolean): Promise
   })
 }
 
+export async function correctTime(discordUserId: string, signatureDate: string, timeIn?: string, timeOut?: string): Promise<void> {
+  await fetch(`${BASE}/correct-time`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordUserId, signatureDate, timeIn, timeOut }),
+  })
+}
+
 export function generateDates(from: string, to: string): string[] {
   const dates: string[] = []
   const current = new Date(from + 'T00:00:00')

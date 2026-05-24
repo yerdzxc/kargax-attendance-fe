@@ -10,6 +10,8 @@
   let editing: string | null = $state(null)
   let editValue = $state('')
 
+  let timeEdit: { userId: string; date: string; field: 'in' | 'out'; value: string } | null = $state(null)
+
   function dayLabel(dateStr: string): string {
     return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })
   }
@@ -24,10 +26,7 @@
   }
 
   async function saveEdit(id: string) {
-    if (!editValue.trim()) {
-      editing = null
-      return
-    }
+    if (!editValue.trim()) { editing = null; return }
     try {
       const res = await fetch('/api/set-name', {
         method: 'POST',
@@ -49,9 +48,7 @@
     }
   }
 
-  function cancelEdit() {
-    editing = null
-  }
+  function cancelEdit() { editing = null }
 
   function parseName(username: string): { surname: string; givenName: string } {
     const commaIdx = username.indexOf(',')
@@ -70,6 +67,46 @@
     if (e.key === 'Escape') cancelEdit()
   }
 
+  function startTimeEdit(userId: string, date: string, field: 'in' | 'out', current: string) {
+    timeEdit = { userId, date, field, value: current }
+  }
+
+  async function saveTimeEdit() {
+    if (!timeEdit) return
+    const { userId, date, field, value } = timeEdit
+    const timeVal = value.trim()
+    try {
+      const body: any = { discordUserId: userId, signatureDate: date }
+      if (field === 'in') body.timeIn = timeVal
+      else body.timeOut = timeVal
+      const res = await fetch('/api/correct-time', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error('Failed to save')
+      const user = users.find((u) => u.discordId === userId)
+      if (user) {
+        const day = user.days.find((d) => d.date === date)
+        if (day) {
+          if (field === 'in') day.timeIn = timeVal
+          else day.timeOut = timeVal
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      timeEdit = null
+    }
+  }
+
+  function cancelTimeEdit() { timeEdit = null }
+
+  function handleTimeKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter') saveTimeEdit()
+    if (e.key === 'Escape') cancelTimeEdit()
+  }
+
   function statusBadge(day: UserAttendance['days'][number]) {
     if (day.status === 'restday') return { cls: 'badge-rest', label: 'RD' }
     if (day.status === 'holiday') return { cls: 'badge-holiday', label: 'H' }
@@ -77,6 +114,10 @@
     if (day.status === 'late') return { cls: 'badge-late', label: 'Late' }
     if (day.present) return { cls: 'badge-present', label: 'OK' }
     return { cls: 'badge-absent', label: '—' }
+  }
+
+  function isTimeEditing(userId: string, date: string, field: 'in' | 'out'): boolean {
+    return timeEdit !== null && timeEdit.userId === userId && timeEdit.date === date && timeEdit.field === field
   }
 </script>
 
@@ -89,7 +130,7 @@
     <table>
       <thead>
         <tr>
-          <th class="name">Name <span class="hint">(double-click to edit)</span></th>
+          <th class="name">Name <span class="hint">(dbl-click)</span></th>
           {#each dates as date}
             <th class="date" colspan="2">
               <span class="day">{dayLabel(date)}</span>
@@ -135,16 +176,24 @@
             {#each user.days as day}
               {@const badge = statusBadge(day)}
               {#if day.present || day.status === 'late'}
-                <td class="time-cell in {day.status}">
-                  {day.timeIn || '--'}
-                  {#if day.status === 'late'}
-                    <span class="late-icon">⚠</span>
+                <td class="time-cell in" ondblclick={() => startTimeEdit(user.discordId, day.date, 'in', day.timeIn)}>
+                  {#if isTimeEditing(user.discordId, day.date, 'in')}
+                    <input type="text" class="time-input" bind:value={timeEdit!.value} onblur={saveTimeEdit} onkeydown={handleTimeKeydown} autofocus placeholder="HH:mm" />
+                  {:else}
+                    {day.timeIn || '--'}
+                    {#if day.status === 'late'}
+                      <span class="late-icon">⚠</span>
+                    {/if}
                   {/if}
                 </td>
-                <td class="time-cell out {day.status}">
-                  {day.timeOut || '--'}
-                  {#if day.overtime}
-                    <span class="ot-icon">+</span>
+                <td class="time-cell out" ondblclick={() => startTimeEdit(user.discordId, day.date, 'out', day.timeOut)}>
+                  {#if isTimeEditing(user.discordId, day.date, 'out')}
+                    <input type="text" class="time-input" bind:value={timeEdit!.value} onblur={saveTimeEdit} onkeydown={handleTimeKeydown} autofocus placeholder="HH:mm" />
+                  {:else}
+                    {day.timeOut || '--'}
+                    {#if day.overtime}
+                      <span class="ot-icon">+</span>
+                    {/if}
                   {/if}
                 </td>
               {:else}
@@ -182,9 +231,11 @@
   .surname { font-size: 11px; color: #999; margin-left: 4px; }
   .restday-tag { display: inline-block; font-size: 9px; background: #f0f0f0; color: #888; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
   .name-input { width: 100%; padding: 4px 6px; border: 2px solid #5865f2; border-radius: 4px; font-size: 13px; font-weight: 500; outline: none; background: white; }
-  .time-cell { font-variant-numeric: tabular-nums; font-size: 12px; position: relative; }
+  .time-cell { font-variant-numeric: tabular-nums; font-size: 12px; position: relative; cursor: pointer; }
+  .time-cell:hover { background: #f8faff; }
   .time-cell.in { color: #333; }
   .time-cell.out { color: #555; }
+  .time-input { width: 52px; padding: 2px 4px; border: 2px solid #5865f2; border-radius: 4px; font-size: 12px; font-weight: 500; outline: none; background: white; text-align: center; font-variant-numeric: tabular-nums; }
   .late-icon { color: #f59e0b; font-size: 10px; margin-left: 2px; }
   .ot-icon { color: #22c55e; font-weight: 700; font-size: 12px; margin-left: 2px; }
   .badge-cell { padding: 4px 6px; }
