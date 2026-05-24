@@ -25,6 +25,13 @@
     return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })
   }
 
+  function formatTime(iso: string | null): string {
+    if (!iso) return ''
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return iso
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+  }
+
   function parseTime(t: string | null): { h: number; m: number } | null {
     if (!t) return null
     const parts = t.split(':')
@@ -112,8 +119,8 @@
         return {
           date,
           dayLabel: dayOfWeek.substring(0, 3),
-          timeIn: rec?.timeIn || '',
-          timeOut: rec?.timeOut || '',
+          timeIn: formatTime(rec?.timeIn),
+          timeOut: formatTime(rec?.timeOut),
           present,
           status,
           leaveType,
@@ -270,6 +277,24 @@
       onRefresh={load}
     />
 
+    <details class="legend">
+      <summary>Badge Legend</summary>
+      <div class="legend-items">
+        <span class="legend-item"><span class="badge badge-present">OK</span> Present</span>
+        <span class="legend-item"><span class="badge badge-late">Late</span> Late</span>
+        <span class="legend-item"><span class="badge badge-absent">—</span> Absent</span>
+        <span class="legend-item"><span class="badge badge-rest">RD</span> Rest Day</span>
+        <span class="legend-item"><span class="badge badge-holiday">H</span> Holiday</span>
+        <span class="legend-item"><span class="badge badge-sl">SL</span> Sick Leave</span>
+        <span class="legend-item"><span class="badge badge-vl">VL</span> Vacation Leave</span>
+        <span class="legend-item"><span class="badge badge-el">EL</span> Emergency Leave</span>
+        <span class="legend-item"><span class="badge badge-bdl">BDL</span> Birthday Leave</span>
+        <span class="legend-item"><span class="badge badge-ob">OB</span> Official Business</span>
+        <span class="legend-item"><span class="ot-icon">+</span> Overtime</span>
+        <span class="legend-item"><span class="late-icon">⚠</span> Late (after 9:00)</span>
+      </div>
+    </details>
+
     <div class="table-section">
       <div class="section-header">
         <h2>Attendance Table</h2>
@@ -333,4 +358,21 @@
   .absent-name { font-weight: 500; color: #333; }
   .absent-dates { color: #888; font-size: 12px; }
   .footer { text-align: center; padding: 32px 0 16px; font-size: 11px; color: #aaa; }
+  .legend { background: white; border: 1px solid #eee; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; cursor: pointer; }
+  .legend summary { font-weight: 600; color: #555; }
+  .legend-items { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; cursor: default; }
+  .legend-item { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #666; }
+  .legend-item .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .legend-item .badge-present { background: #dcfce7; color: #16a34a; }
+  .legend-item .badge-late { background: #fef3c7; color: #d97706; }
+  .legend-item .badge-absent { background: #fef2f2; color: #dc2626; }
+  .legend-item .badge-rest { background: #e0e7ff; color: #4f46e5; }
+  .legend-item .badge-holiday { background: #fce7f3; color: #db2777; }
+  .legend-item .badge-sl { background: #fce4ec; color: #c62828; }
+  .legend-item .badge-vl { background: #e8f5e9; color: #2e7d32; }
+  .legend-item .badge-el { background: #fff3e0; color: #e65100; }
+  .legend-item .badge-bdl { background: #e3f2fd; color: #1565c0; }
+  .legend-item .badge-ob { background: #f3e5f5; color: #7b1fa2; }
+  .legend-item .ot-icon { color: #22c55e; font-weight: 700; font-size: 14px; }
+  .legend-item .late-icon { color: #f59e0b; font-size: 14px; }
 </style>
