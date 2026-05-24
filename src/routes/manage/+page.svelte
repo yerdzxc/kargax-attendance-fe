@@ -1,13 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance } from '$lib/api'
+  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listInactiveUsers, setUserActive } from '$lib/api'
   import type { HolidayRecord, LeaveRecord, ExportUser } from '$lib/types'
 
-  let tab = $state<'holidays' | 'leaves' | 'restdays'>('holidays')
+  let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users'>('holidays')
 
   let holidays: HolidayRecord[] = $state([])
   let leaves: LeaveRecord[] = $state([])
   let users: ExportUser[] = $state([])
+  let inactiveUsers = $state<{ discordId: string; username: string; lastAccess: string | null }[]>([])
   let loading = $state(true)
   let message = $state('')
 
@@ -35,14 +36,16 @@
     message = ''
     try {
       const range = weekRange()
-      const [h, l, data] = await Promise.all([
+      const [h, l, data, inact] = await Promise.all([
         listHolidays(),
         listLeaves(),
         fetchAttendance(range.from, range.to, 'employee'),
+        listInactiveUsers(),
       ])
       holidays = h
       leaves = l
       users = data.users
+      inactiveUsers = inact
       for (const u of users) {
         restDayEdit[u.discordId] = u.restDay || ''
       }
@@ -143,6 +146,7 @@
     <button class="tab" class:active={tab === 'holidays'} onclick={() => tab = 'holidays'}>Holidays</button>
     <button class="tab" class:active={tab === 'leaves'} onclick={() => tab = 'leaves'}>Leaves</button>
     <button class="tab" class:active={tab === 'restdays'} onclick={() => tab = 'restdays'}>Rest Days</button>
+    <button class="tab" class:active={tab === 'users'} onclick={() => tab = 'users'}>Users</button>
   </div>
 
   {#if loading}
@@ -237,6 +241,31 @@
                   </select>
                 </td>
                 <td><button class="btn small primary" onclick={() => saveRestDay(u.discordId)}>Save</button></td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      {/if}
+    </div>
+  {:else if tab === 'users'}
+    <div class="panel">
+      <h2>Inactive Users</h2>
+      <p class="hint">Users who haven't accessed the system in 30+ days. Reactivate if they return.</p>
+      {#if inactiveUsers.length === 0}
+        <div class="empty">No inactive users.</div>
+      {:else}
+        <table class="list">
+          <thead>
+            <tr><th>User</th><th>Last Access</th><th></th></tr>
+          </thead>
+          <tbody>
+            {#each inactiveUsers as u}
+              <tr>
+                <td>{u.username || u.discordId}</td>
+                <td>{u.lastAccess || '—'}</td>
+                <td>
+                  <button class="btn small primary" onclick={async () => { await setUserActive(u.discordId, true); inactiveUsers = await listInactiveUsers(); message = 'User reactivated.'; }}>Reactivate</button>
+                </td>
               </tr>
             {/each}
           </tbody>

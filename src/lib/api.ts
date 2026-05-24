@@ -63,6 +63,21 @@ export async function removeLeave(discordId: string, date: string): Promise<void
   await fetch(`${BASE}/leaves?discordId=${discordId}&date=${date}`, { method: 'DELETE' })
 }
 
+export async function listInactiveUsers(type?: string): Promise<{ discordId: string; username: string; lastAccess: string | null }[]> {
+  const params = type ? `?type=${type}` : ''
+  const res = await fetch(`${BASE}/users/inactive${params}`)
+  if (!res.ok) throw new Error('Failed to fetch inactive users')
+  return res.json()
+}
+
+export async function setUserActive(discordId: string, active: boolean): Promise<void> {
+  await fetch(`${BASE}/users/set-active`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordId, active }),
+  })
+}
+
 export function generateDates(from: string, to: string): string[] {
   const dates: string[] = []
   const current = new Date(from + 'T00:00:00')
