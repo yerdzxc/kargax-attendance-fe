@@ -62,8 +62,8 @@
       : users,
   );
 
-  const totalPresent = $derived(filteredUsers.reduce((sum, u) => sum + u.totalPresent, 0));
-  const totalAbsent = $derived(filteredUsers.reduce((sum, u) => sum + u.totalAbsent, 0));
+  const todayPresent = $derived(filteredUsers.filter((u) => u.days[0]?.present).length);
+  const todayAbsent = $derived(filteredUsers.length - todayPresent);
 
   onMount(() => {
     const range = getWeekRange();
@@ -89,7 +89,7 @@
       </div>
     {/if}
 
-    <SummaryCards totalUsers={filteredUsers.length} totalPresent={totalPresent} totalAbsent={totalAbsent} />
+    <SummaryCards totalUsers={filteredUsers.length} totalPresent={todayPresent} totalAbsent={todayAbsent} />
 
     <FilterBar
       {from} {to} {type} {search} {loading}
@@ -100,7 +100,7 @@
       onRefresh={load}
     />
 
-    <AttendanceTable {users} {dates} {loading} />
+    <AttendanceTable users={filteredUsers} {dates} {loading} />
   </main>
 
   <footer class="footer">

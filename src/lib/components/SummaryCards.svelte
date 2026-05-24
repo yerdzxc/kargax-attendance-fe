@@ -12,11 +12,11 @@
     <span class="value">{totalUsers}</span>
   </div>
   <div class="card present">
-    <span class="label">Present</span>
+    <span class="label">Present Today</span>
     <span class="value today">{totalPresent}</span>
   </div>
   <div class="card absent">
-    <span class="label">Absent</span>
+    <span class="label">Absent Today</span>
     <span class="value">{totalAbsent}</span>
   </div>
 </div>
