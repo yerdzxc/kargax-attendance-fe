@@ -9,6 +9,7 @@
   let users: UserAttendance[] = $state([]);
   let filteredUsers: UserAttendance[] = $state([]);
   let dates: string[] = $state([]);
+  let rawData: ExportData | null = $state(null);
   let loading = $state(true);
   let absentLoading = $state(false);
 
@@ -147,6 +148,7 @@
     error = '';
     try {
       const raw = await fetchAttendance(from, to, type) as ExportData;
+      rawData = raw;
       const dateList = generateDates(from, to);
       users = processExportData(raw, dateList);
       filteredUsers = filterUsers(users, search);
@@ -208,9 +210,70 @@
   }
 
   function handleDownload() {
-    const fromDate = from;
-    const toDate = to;
-    window.open(`/api/export?from=${fromDate}&to=${toDate}&type=${type}`, '_blank');
+    if (!rawData) return
+    const data = rawData
+
+    const dayLabels = dates.map((dateStr) => new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' }))
+    const dateDisplay = dates.map((dateStr) => new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))
+
+    const recordMap = new Map<string, Map<string, { timeIn: string; timeOut: string }>>()
+    for (const r of data.records) {
+      if (!recordMap.has(r.discordUserId)) recordMap.set(r.discordUserId, new Map())
+      const userDates = recordMap.get(r.discordUserId)!
+      const dateKey = r.signatureDate || ''
+      userDates.set(dateKey, { timeIn: formatTime(r.timeIn), timeOut: formatTime(r.timeOut) })
+    }
+
+    function parseName(username: string): { surname: string; givenName: string } {
+      const commaIdx = username.indexOf(',')
+      if (commaIdx > -1) {
+        return { surname: username.substring(0, commaIdx).trim(), givenName: username.substring(commaIdx + 1).trim() }
+      }
+      const spaceIdx = username.lastIndexOf(' ')
+      if (spaceIdx > -1) {
+        return { surname: username.substring(spaceIdx + 1).trim(), givenName: username.substring(0, spaceIdx).trim() }
+      }
+      return { surname: '', givenName: username }
+    }
+
+    const rows: string[][] = []
+    const header1: string[] = ['NAMES', '']
+    const header2: string[] = ['SURNAME', 'GIVEN NAME']
+    const dayRow: string[] = ['', '']
+
+    for (let i = 0; i < dates.length; i++) {
+      header1.push(dateDisplay[i], '')
+      header2.push('Time in', 'Time out')
+      dayRow.push(dayLabels[i], '')
+    }
+
+    rows.push(header1, header2, dayRow)
+
+    for (const user of data.users) {
+      const { surname, givenName } = parseName(user.username)
+      const row: string[] = [surname, givenName]
+      const userDates = recordMap.get(user.discordId) || new Map()
+      for (const date of dates) {
+        const entry = userDates.get(date)
+        row.push(entry?.timeIn || '', entry?.timeOut || '')
+      }
+      rows.push(row)
+    }
+
+    const csv = '\uFEFF' + rows.map((r) => r.map((c) => {
+      if (c.includes(',') || c.includes('"') || c.includes('\n')) return `"${c.replace(/"/g, '""')}"`
+      return c
+    }).join(',')).join('\r\n')
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `KargaX Attendance ${dates[0]} to ${dates[dates.length - 1]}.csv`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
   }
 
   const todayPresent = $derived(filteredUsers.filter((u) => u.days[0]?.present).length);
