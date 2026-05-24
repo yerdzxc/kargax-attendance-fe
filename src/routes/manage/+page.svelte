@@ -22,10 +22,13 @@
   let restDayEdit: Record<string, string> = $state({})
   let userSearch = $state('')
   let userTypeFilter = $state('all')
+  let userActiveFilter = $state('all')
 
   const filteredUsers = $derived(
     allUsers.filter((u) => {
       if (userTypeFilter !== 'all' && u.type !== userTypeFilter) return false
+      if (userActiveFilter === 'active' && !u.active) return false
+      if (userActiveFilter === 'inactive' && u.active) return false
       if (userSearch && !u.username?.toLowerCase().includes(userSearch.toLowerCase())) return false
       return true
     })
@@ -263,6 +266,11 @@
       <p class="hint">Manage user access. Deactivate former employees, reactivate returning ones.</p>
       <div class="user-filters">
         <input type="text" bind:value={userSearch} placeholder="Search by name..." />
+        <select bind:value={userActiveFilter}>
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
         <select bind:value={userTypeFilter}>
           <option value="all">All Types</option>
           <option value="employee">Employee</option>
