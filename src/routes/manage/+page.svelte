@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listInactiveUsers, setUserActive } from '$lib/api'
+  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive } from '$lib/api'
   import type { HolidayRecord, LeaveRecord, ExportUser } from '$lib/types'
 
   let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users'>('holidays')
@@ -8,7 +8,7 @@
   let holidays: HolidayRecord[] = $state([])
   let leaves: LeaveRecord[] = $state([])
   let users: ExportUser[] = $state([])
-  let inactiveUsers = $state<{ discordId: string; username: string; lastAccess: string | null }[]>([])
+  let allUsers = $state<{ discordId: string; username: string; active: boolean; lastAccess: string | null }[]>([])
   let loading = $state(true)
   let message = $state('')
 
@@ -36,16 +36,16 @@
     message = ''
     try {
       const range = weekRange()
-      const [h, l, data, inact] = await Promise.all([
+      const [h, l, data, all] = await Promise.all([
         listHolidays(),
         listLeaves(),
         fetchAttendance(range.from, range.to, 'employee'),
-        listInactiveUsers(),
+        listUsers(),
       ])
       holidays = h
       leaves = l
       users = data.users
-      inactiveUsers = inact
+      allUsers = all
       for (const u of users) {
         restDayEdit[u.discordId] = u.restDay || ''
       }
@@ -249,22 +249,31 @@
     </div>
   {:else if tab === 'users'}
     <div class="panel">
-      <h2>Inactive Users</h2>
-      <p class="hint">Users who haven't accessed the system in 30+ days. Reactivate if they return.</p>
-      {#if inactiveUsers.length === 0}
-        <div class="empty">No inactive users.</div>
+      <h2>All Users</h2>
+      <p class="hint">Manage user access. Deactivate former employees, reactivate returning ones.</p>
+      {#if allUsers.length === 0}
+        <div class="empty">No users found.</div>
       {:else}
         <table class="list">
           <thead>
-            <tr><th>User</th><th>Last Access</th><th></th></tr>
+            <tr><th>User</th><th>Status</th><th>Last Access</th><th></th></tr>
           </thead>
           <tbody>
-            {#each inactiveUsers as u}
+            {#each allUsers as u}
               <tr>
                 <td>{u.username || u.discordId}</td>
+                <td>
+                  <span class="badge" class:badge-active={u.active} class:badge-inactive={!u.active}>
+                    {u.active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
                 <td>{u.lastAccess || '—'}</td>
                 <td>
-                  <button class="btn small primary" onclick={async () => { await setUserActive(u.discordId, true); inactiveUsers = await listInactiveUsers(); message = 'User reactivated.'; }}>Reactivate</button>
+                  {#if u.active}
+                    <button class="btn small danger" onclick={async () => { await setUserActive(u.discordId, false); allUsers = await listUsers(); message = 'User deactivated.'; }}>Deactivate</button>
+                  {:else}
+                    <button class="btn small primary" onclick={async () => { await setUserActive(u.discordId, true); allUsers = await listUsers(); message = 'User reactivated.'; }}>Reactivate</button>
+                  {/if}
                 </td>
               </tr>
             {/each}
@@ -307,6 +316,8 @@
   .list td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; }
   .list tr:hover td { background: #f8f9fa; }
   .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .badge-active { background: #dcfce7; color: #16a34a; }
+  .badge-inactive { background: #fef2f2; color: #dc2626; }
   .badge-sl { background: #fce4ec; color: #c62828; }
   .badge-vl { background: #e8f5e9; color: #2e7d32; }
   .badge-el { background: #fff3e0; color: #e65100; }
