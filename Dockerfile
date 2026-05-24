@@ -9,7 +9,7 @@ COPY . .
 RUN bun run build
 
 # ---- Production Stage ----
-FROM node:22-alpine
+FROM oven/bun:1
 WORKDIR /app
 
 COPY --from=builder /app/build build/
@@ -21,4 +21,4 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
-CMD ["node", "build/index.js"]
+CMD ["bun", "build/index.js"]
