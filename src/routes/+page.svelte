@@ -20,6 +20,7 @@
 
   let showAbsent = $state(false);
   let viewMode = $state<'weekly' | 'monthly'>('weekly');
+  let statusFilter = $state('all');
 
   function buildDateMeta(dateList: string[]) {
     const meta = new Map<string, { dayOfWeek: string; dayLabel: string; display: string }>()
@@ -217,14 +218,18 @@
     URL.revokeObjectURL(url)
   }
 
-  const todayPresent = $derived(filteredUsers.filter((u) => u.days[0]?.present).length);
-  const todayAbsent = $derived(filteredUsers.filter((u) => u.days[0]?.status === 'absent').length);
-  const todayLeave = $derived(filteredUsers.filter((u) => u.days[0]?.status === 'leave').length);
-  const todayRest = $derived(filteredUsers.filter((u) => u.days[0]?.status === 'restday').length);
-  const todayHoliday = $derived(filteredUsers.filter((u) => u.days[0]?.status === 'holiday').length);
+  const displayedUsers = $derived(
+    statusFilter === 'all' ? filteredUsers : filteredUsers.filter((u) => u.days[0]?.status === statusFilter)
+  )
+
+  const todayPresent = $derived(displayedUsers.filter((u) => u.days[0]?.present).length);
+  const todayAbsent = $derived(displayedUsers.filter((u) => u.days[0]?.status === 'absent').length);
+  const todayLeave = $derived(displayedUsers.filter((u) => u.days[0]?.status === 'leave').length);
+  const todayRest = $derived(displayedUsers.filter((u) => u.days[0]?.status === 'restday').length);
+  const todayHoliday = $derived(displayedUsers.filter((u) => u.days[0]?.status === 'holiday').length);
 
   const absentUsers = $derived(
-    filteredUsers
+    displayedUsers
       .filter((u) => u.days.some((d) => d.status === 'absent'))
       .map((u) => ({
         ...u,
@@ -264,7 +269,7 @@
     {/if}
 
     <SummaryCards
-      totalUsers={filteredUsers.length}
+      totalUsers={displayedUsers.length}
       totalPresent={todayPresent}
       totalAbsent={todayAbsent}
       totalLeave={todayLeave}
@@ -302,9 +307,20 @@
     <div class="table-section">
       <div class="section-header">
         <h2>Attendance Table</h2>
-        <button class="toggle-absent" onclick={() => showAbsent = !showAbsent}>
-          {showAbsent ? 'Show All' : 'Absent List'} ({absentUsers.length})
-        </button>
+        <div class="table-actions">
+          <select class="status-filter" bind:value={statusFilter}>
+            <option value="all">All</option>
+            <option value="present">Present</option>
+            <option value="absent">Absent</option>
+            <option value="late">Late</option>
+            <option value="leave">On Leave</option>
+            <option value="restday">Rest Day</option>
+            <option value="holiday">Holiday</option>
+          </select>
+          <button class="toggle-absent" onclick={() => showAbsent = !showAbsent}>
+            {showAbsent ? 'Show All' : 'Absent List'} ({absentUsers.length})
+          </button>
+        </div>
       </div>
 
       {#if showAbsent}
@@ -323,7 +339,7 @@
         </div>
       {/if}
 
-      <AttendanceTable users={filteredUsers} {dates} {loading} />
+      <AttendanceTable users={displayedUsers} {dates} {loading} />
     </div>
   </main>
 
@@ -352,6 +368,8 @@
   .table-section { margin-top: 20px; }
   .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .section-header h2 { font-size: 16px; color: #333; }
+  .table-actions { display: flex; align-items: center; gap: 8px; }
+  .status-filter { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; background: white; }
   .toggle-absent { padding: 6px 12px; background: white; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; font-weight: 600; color: #5865f2; cursor: pointer; }
   .toggle-absent:hover { background: #f0f4ff; }
   .absent-list { background: white; border: 1px solid #fee2e2; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
