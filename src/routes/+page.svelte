@@ -9,9 +9,8 @@
   let users: UserAttendance[] = $state([]);
   let filteredUsers: UserAttendance[] = $state([]);
   let dates: string[] = $state([]);
-  let rawData: ExportData | null = $state(null);
+  let dateMeta = $state(new Map<string, { dayOfWeek: string; dayLabel: string; display: string }>());
   let loading = $state(true);
-  let absentLoading = $state(false);
 
   let from = $state('');
   let to = $state('');
@@ -22,37 +21,55 @@
   let showAbsent = $state(false);
   let viewMode = $state<'weekly' | 'monthly'>('weekly');
 
-  function getDayOfWeek(dateStr: string): string {
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })
+  function buildDateMeta(dateList: string[]) {
+    const meta = new Map<string, { dayOfWeek: string; dayLabel: string; display: string }>()
+    for (const date of dateList) {
+      const d = new Date(date + 'T00:00:00')
+      meta.set(date, {
+        dayOfWeek: d.toLocaleDateString('en-US', { weekday: 'long' }),
+        dayLabel: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        display: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      })
+    }
+    return meta
+  }
+
+  function parseTime(iso: string | null): { h: number; m: number } | null {
+    if (!iso) return null
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return null
+    return { h: d.getHours(), m: d.getMinutes() }
   }
 
   function formatTime(iso: string | null): string {
-    if (!iso) return ''
-    const d = new Date(iso)
-    if (isNaN(d.getTime())) return iso
-    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+    const t = parseTime(iso)
+    if (!t) return ''
+    return `${String(t.h).padStart(2, '0')}:${String(t.m).padStart(2, '0')}`
   }
 
-  function parseTime(t: string | null): { h: number; m: number } | null {
-    if (!t) return null
-    const parts = t.split(':')
-    if (parts.length < 2) return null
-    return { h: parseInt(parts[0], 10), m: parseInt(parts[1], 10) }
+  function isLate(iso: string | null): boolean {
+    const t = parseTime(iso)
+    return t !== null && (t.h > 9 || (t.h === 9 && t.m > 0))
   }
 
-  function isLate(timeIn: string | null): boolean {
-    const t = parseTime(timeIn)
-    if (!t) return false
-    return t.h > 9 || (t.h === 9 && t.m > 0)
+  function isOvertime(iso: string | null): boolean {
+    const t = parseTime(iso)
+    return t !== null && (t.h > 18 || (t.h === 18 && t.m > 0))
   }
 
-  function isOvertime(timeOut: string | null): boolean {
-    const t = parseTime(timeOut)
-    if (!t) return false
-    return t.h > 18 || (t.h === 18 && t.m > 0)
+  function parseName(username: string): { surname: string; givenName: string } {
+    const commaIdx = username.indexOf(',')
+    if (commaIdx > -1) {
+      return { surname: username.substring(0, commaIdx).trim(), givenName: username.substring(commaIdx + 1).trim() }
+    }
+    const spaceIdx = username.lastIndexOf(' ')
+    if (spaceIdx > -1) {
+      return { surname: username.substring(spaceIdx + 1).trim(), givenName: username.substring(0, spaceIdx).trim() }
+    }
+    return { surname: '', givenName: username }
   }
 
-  function processExportData(data: ExportData, dateList: string[]): UserAttendance[] {
+  function processExportData(data: ExportData, dateList: string[], metaMap: Map<string, { dayOfWeek: string; dayLabel: string; display: string }>): UserAttendance[] {
     const leaveMap = new Map<string, Map<string, string>>()
     for (const l of data.leaves) {
       if (!leaveMap.has(l.discordUserId)) leaveMap.set(l.discordUserId, new Map())
@@ -73,30 +90,19 @@
       recordMap.get(r.discordUserId)!.set(r.signatureDate, { timeIn: r.timeIn, timeOut: r.timeOut })
     }
 
-    function parseName(username: string): { surname: string; givenName: string } {
-      const commaIdx = username.indexOf(',')
-      if (commaIdx > -1) {
-        return { surname: username.substring(0, commaIdx).trim(), givenName: username.substring(commaIdx + 1).trim() }
-      }
-      const spaceIdx = username.lastIndexOf(' ')
-      if (spaceIdx > -1) {
-        return { surname: username.substring(spaceIdx + 1).trim(), givenName: username.substring(0, spaceIdx).trim() }
-      }
-      return { surname: '', givenName: username }
-    }
-
     return data.users.map((u) => {
       const userRecords = recordMap.get(u.discordId) || new Map()
       const userLeaves = leaveMap.get(u.discordId) || new Map()
-      const nameParts = parseName(u.username)
+      const { surname, givenName } = parseName(u.username)
+      const restDayLower = u.restDay?.toLowerCase()
 
       let totalPresent = 0
       let totalAbsent = 0
 
       const days: AttendanceEntry[] = dateList.map((date) => {
         const rec = userRecords.get(date)
-        const dayOfWeek = getDayOfWeek(date)
-        const isRestDay = u.restDay?.toLowerCase() === dayOfWeek.toLowerCase()
+        const m = metaMap.get(date)!
+        const isRestDay = restDayLower === m.dayOfWeek.toLowerCase()
         const isHoliday = holidaySet.has(date)
         const leaveType = userLeaves.get(date)
 
@@ -119,7 +125,7 @@
 
         return {
           date,
-          dayLabel: dayOfWeek.substring(0, 3),
+          dayLabel: m.dayLabel,
           timeIn: formatTime(rec?.timeIn),
           timeOut: formatTime(rec?.timeOut),
           present,
@@ -131,15 +137,7 @@
         }
       })
 
-      return {
-        discordId: u.discordId,
-        username: u.username,
-        ...nameParts,
-        restDay: u.restDay,
-        days,
-        totalPresent,
-        totalAbsent,
-      }
+      return { discordId: u.discordId, username: u.username, surname, givenName, restDay: u.restDay, days, totalPresent, totalAbsent }
     })
   }
 
@@ -148,16 +146,15 @@
     error = '';
     try {
       const raw = await fetchAttendance(from, to, type) as ExportData;
-      rawData = raw;
       const dateList = generateDates(from, to);
-      users = processExportData(raw, dateList);
-      filteredUsers = filterUsers(users, search);
+      const meta = buildDateMeta(dateList);
+      dateMeta = meta;
       dates = dateList;
+      users = processExportData(raw, dateList, meta);
+      filteredUsers = filterUsers(users, search);
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load data';
-      users = [];
-      filteredUsers = [];
-      dates = [];
+      users = []; filteredUsers = []; dates = [];
     } finally {
       loading = false;
     }
@@ -166,9 +163,7 @@
   function setWeekly() {
     viewMode = 'weekly'
     const range = getWeekRange()
-    from = range.from
-    to = range.to
-    load()
+    from = range.from; to = range.to; load()
   }
 
   function setMonthly() {
@@ -176,103 +171,49 @@
     const today = new Date()
     const first = new Date(today.getFullYear(), today.getMonth(), 1)
     const last = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-    const fmt = (d: Date) => d.toISOString().split('T')[0]
-    from = fmt(first)
-    to = fmt(last)
-    load()
+    from = first.toISOString().split('T')[0]; to = last.toISOString().split('T')[0]; load()
   }
 
   function filterUsers(userList: UserAttendance[], query: string): UserAttendance[] {
     if (!query) return userList
     const q = query.toLowerCase()
-    return userList.filter(
-      (u) =>
-        u.username.toLowerCase().includes(q) ||
-        u.givenName.toLowerCase().includes(q) ||
-        u.surname.toLowerCase().includes(q),
-    )
+    return userList.filter((u) => u.username.toLowerCase().includes(q) || u.givenName.toLowerCase().includes(q) || u.surname.toLowerCase().includes(q))
   }
 
-  function handleSearch(v: string) {
-    search = v;
-    filteredUsers = filterUsers(users, v);
-  }
+  function handleSearch(v: string) { search = v; filteredUsers = filterUsers(users, v) }
 
-  function handleTypeChange(v: string) {
-    type = v;
-    load();
-  }
+  function handleTypeChange(v: string) { type = v; load() }
 
-  function handleDateChange(f: string, t: string) {
-    from = f;
-    to = t;
-    load();
-  }
+  function handleDateChange(f: string, t: string) { from = f; to = t; load() }
 
   function handleDownload() {
-    if (!rawData) return
-    const data = rawData
-
-    const dayLabels = dates.map((dateStr) => new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' }))
-    const dateDisplay = dates.map((dateStr) => new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))
-
-    const recordMap = new Map<string, Map<string, { timeIn: string; timeOut: string }>>()
-    for (const r of data.records) {
-      if (!recordMap.has(r.discordUserId)) recordMap.set(r.discordUserId, new Map())
-      const userDates = recordMap.get(r.discordUserId)!
-      const dateKey = r.signatureDate || ''
-      userDates.set(dateKey, { timeIn: formatTime(r.timeIn), timeOut: formatTime(r.timeOut) })
-    }
-
-    function parseName(username: string): { surname: string; givenName: string } {
-      const commaIdx = username.indexOf(',')
-      if (commaIdx > -1) {
-        return { surname: username.substring(0, commaIdx).trim(), givenName: username.substring(commaIdx + 1).trim() }
-      }
-      const spaceIdx = username.lastIndexOf(' ')
-      if (spaceIdx > -1) {
-        return { surname: username.substring(spaceIdx + 1).trim(), givenName: username.substring(0, spaceIdx).trim() }
-      }
-      return { surname: '', givenName: username }
-    }
-
     const rows: string[][] = []
-    const header1: string[] = ['NAMES', '']
-    const header2: string[] = ['SURNAME', 'GIVEN NAME']
-    const dayRow: string[] = ['', '']
+    const h1: string[] = ['NAMES', '']
+    const h2: string[] = ['SURNAME', 'GIVEN NAME']
+    const hr: string[] = ['', '']
 
     for (let i = 0; i < dates.length; i++) {
-      header1.push(dateDisplay[i], '')
-      header2.push('Time in', 'Time out')
-      dayRow.push(dayLabels[i], '')
+      h1.push(dateMeta.get(dates[i])!.display, '')
+      h2.push('Time in', 'Time out')
+      hr.push(dateMeta.get(dates[i])!.dayOfWeek, '')
     }
+    rows.push(h1, h2, hr)
 
-    rows.push(header1, header2, dayRow)
-
-    for (const user of data.users) {
-      const { surname, givenName } = parseName(user.username)
-      const row: string[] = [surname, givenName]
-      const userDates = recordMap.get(user.discordId) || new Map()
-      for (const date of dates) {
-        const entry = userDates.get(date)
-        row.push(entry?.timeIn || '', entry?.timeOut || '')
+    for (const u of users) {
+      const row: string[] = [u.surname, u.givenName || u.username]
+      for (const day of u.days) {
+        row.push(day.timeIn, day.timeOut)
       }
       rows.push(row)
     }
 
-    const csv = '\uFEFF' + rows.map((r) => r.map((c) => {
-      if (c.includes(',') || c.includes('"') || c.includes('\n')) return `"${c.replace(/"/g, '""')}"`
-      return c
-    }).join(',')).join('\r\n')
-
+    const csv = '\uFEFF' + rows.map((r) => r.map((c) => c.includes(',') || c.includes('"') ? `"${c.replace(/"/g, '""')}"` : c).join(',')).join('\r\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = `KargaX Attendance ${dates[0]} to ${dates[dates.length - 1]}.csv`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
+    document.body.appendChild(a); a.click(); a.remove()
     URL.revokeObjectURL(url)
   }
 
