@@ -42,6 +42,20 @@ export async function removeHoliday(date: string): Promise<void> {
   await fetch(`${BASE}/holidays?date=${date}`, { method: 'DELETE' })
 }
 
+export async function restoreHoliday(date: string): Promise<void> {
+  await fetch(`${BASE}/holidays/restore`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date }),
+  })
+}
+
+export async function listAllHolidays(): Promise<HolidayRecord[]> {
+  const res = await fetch(`${BASE}/holidays/all`)
+  if (!res.ok) throw new Error('Failed to fetch holidays')
+  return res.json()
+}
+
 export async function listLeaves(from?: string, to?: string): Promise<LeaveRecord[]> {
   const params = new URLSearchParams()
   if (from) params.set('from', from)
@@ -61,6 +75,14 @@ export async function upsertLeave(discordId: string, date: string, type: string,
 
 export async function removeLeave(discordId: string, date: string): Promise<void> {
   await fetch(`${BASE}/leaves?discordId=${discordId}&date=${date}`, { method: 'DELETE' })
+}
+
+export async function restoreLeave(discordId: string, date: string): Promise<void> {
+  await fetch(`${BASE}/leaves/restore`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordId, date }),
+  })
 }
 
 interface DiscordUserEntry {
