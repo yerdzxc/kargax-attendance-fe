@@ -52,6 +52,13 @@
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   }
 
+  function getDateFromIso(iso: string | null): string | null {
+    if (!iso) return null
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return null
+    return d.toISOString().split('T')[0]
+  }
+
   function isRestDay(dateStr: string): boolean {
     if (!user?.restDay) return false
     const restDays = user.restDay.toLowerCase().split(',').map((d) => d.trim())
@@ -68,7 +75,7 @@
     if (holidays.has(dateStr)) return 'holiday'
     if (isRestDay(dateStr)) return 'restday'
     if (leaves.has(dateStr)) return `leave ${leaves.get(dateStr)?.toLowerCase()}`
-    const rec = records.get(dateStr)
+    const rec = coveredRecords(dateStr)
     if (rec) return rec.late ? 'late' : 'present'
     return 'absent'
   }
@@ -78,9 +85,18 @@
     if (holidays.has(dateStr)) return 'H'
     if (isRestDay(dateStr)) return 'RD'
     if (leaves.has(dateStr)) return leaves.get(dateStr)!
-    const rec = records.get(dateStr)
+    const rec = coveredRecords(dateStr)
     if (rec) return rec.late ? '⚠' : 'OK'
     return '—'
+  }
+
+  function coveredRecords(dateStr: string): UserRecord | undefined {
+    let rec = records.get(dateStr)
+    if (rec) return rec
+    for (const [sigDate, r] of records) {
+      if (getDateFromIso(r.timeOut) === dateStr && sigDate !== dateStr) return r
+    }
+    return undefined
   }
 
   let monthOffset = $state(0)
@@ -131,7 +147,7 @@
   function downloadCSV() {
     const rows: string[][] = [['Date', 'Day', 'Time In', 'Time Out', 'Status']]
     for (const date of dates) {
-      const rec = records.get(date)
+      const rec = coveredRecords(date) || records.get(date)
       const day = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })
       const status = statusLabel(date)
       rows.push([
@@ -198,7 +214,7 @@
         </thead>
         <tbody>
           {#each dates as date}
-            {@const rec = records.get(date)}
+            {@const rec = coveredRecords(date)}
             <tr class="day-row {statusClass(date)}">
               <td class="date-cell">{new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
               <td class="day-cell">{dayLabel(date)}</td>
@@ -216,12 +232,7 @@
                   <span class="absent-marker">—</span>
                 {/if}
               </td>
-              <td class="status-cell">
-                <span class="badge badge-{statusClass(date).split(' ')[0]}">{statusLabel(date)}</span>
-                {#if holidays.has(date)}
-                  <span class="holiday-name">{holidays.get(date)}</span>
-                {/if}
-              </td>
+              <td class={`status-cell ${statusClass(date)}`}>{statusLabel(date)}</td>
             </tr>
           {/each}
         </tbody>

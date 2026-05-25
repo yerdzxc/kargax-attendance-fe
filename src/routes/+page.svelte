@@ -53,9 +53,19 @@
     return `${String(t.h).padStart(2, '0')}:${String(t.m).padStart(2, '0')}`
   }
 
-  function isOvertime(iso: string | null): boolean {
-    const t = parseTime(iso)
-    return t !== null && (t.h > 18 || (t.h === 18 && t.m > 0))
+  function getDateFromIso(iso: string | null): string | null {
+    if (!iso) return null
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return null
+    return d.toISOString().split('T')[0]
+  }
+
+  function isOvertime(iso: string | null, timeInIso?: string | null): boolean {
+    const out = parseTime(iso)
+    if (!out) return false
+    const tin = timeInIso ? parseTime(timeInIso) : null
+    if (tin && tin.h >= 14) { return out.h < 9 || (out.h === 9 && out.m === 0) }
+    return out.h > 18 || (out.h === 18 && out.m > 0)
   }
 
   function parseName(username: string): { surname: string; givenName: string } {
@@ -97,11 +107,18 @@
       const { surname, givenName } = parseName(u.username)
       const restDays = u.restDay?.toLowerCase().split(',').map((d) => d.trim()) || []
 
+      const coveredDates = new Map<string, { timeIn: string | null; timeOut: string | null; late: boolean }>()
+      for (const [date, rec] of userRecords) {
+        coveredDates.set(date, rec)
+        const tod = getDateFromIso(rec.timeOut)
+        if (tod && tod !== date) coveredDates.set(tod, rec)
+      }
+
       let totalPresent = 0
       let totalAbsent = 0
 
       const days: AttendanceEntry[] = dateList.map((date) => {
-        const rec = userRecords.get(date)
+        const rec = coveredDates.get(date)
         const m = metaMap.get(date)!
         const isRestDay = restDays.includes(m.dayOfWeek.toLowerCase())
         const isHoliday = holidaySet.has(date)
@@ -136,7 +153,7 @@
           status,
           leaveType,
           holidayName: isHoliday ? holidayNames.get(date) : undefined,
-          overtime: rec ? isOvertime(rec.timeOut) : false,
+          overtime: rec ? isOvertime(rec.timeOut, rec.timeIn) : false,
           noTimeOut: rec ? !rec.timeOut : false,
         }
       })
