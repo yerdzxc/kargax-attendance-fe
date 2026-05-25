@@ -376,6 +376,10 @@
         <span class="legend-item"><span class="ot-icon">+</span> Overtime</span>
         <span class="legend-item"><span class="late-icon">⚠</span> Late (manually set by HR)</span>
       </div>
+      <div class="legend-notes">
+        <strong>OT:</strong> day shift (>6PM) / night shift (>6AM if clock-in ≥2PM)<br>
+        <strong>Day-spanning:</strong> night shifts covering the next day won't show as absent
+      </div>
     </details>
 
     <div class="table-section">
@@ -477,4 +481,5 @@
   .legend-item .badge-ob { background: #f3e5f5; color: #7b1fa2; }
   .legend-item .ot-icon { color: #22c55e; font-weight: 700; font-size: 14px; }
   .legend-item .late-icon { color: #f59e0b; font-size: 14px; }
+  .legend-notes { margin-top: 10px; font-size: 11px; color: #888; line-height: 1.6; padding-top: 8px; border-top: 1px solid #eee; }
 </style>

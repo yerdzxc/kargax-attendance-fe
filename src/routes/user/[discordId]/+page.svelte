@@ -250,6 +250,10 @@
         <span class="legend-item"><span class="dot leave"></span> On Leave</span>
         <span class="legend-item"><span class="dot future"></span> Future</span>
       </div>
+      <div class="legend-notes">
+        <strong>OT:</strong> day shift (>6PM) / night shift (>6AM if clock-in ≥2PM)<br>
+        <strong>Day-spanning:</strong> night shifts covering the next day won't show as absent
+      </div>
     </div>
   {/if}
 </div>
@@ -313,4 +317,5 @@
   .dot.holiday { background: #db2777; }
   .dot.leave { background: #f59e0b; }
   .dot.future { background: #ccc; }
+  .legend-notes { margin-top: 10px; font-size: 11px; color: #888; line-height: 1.6; padding-top: 8px; border-top: 1px solid #eee; }
 </style>
