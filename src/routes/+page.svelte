@@ -187,6 +187,7 @@
       error = e instanceof Error ? e.message : 'Failed to load data';
       users = []; filteredUsers = []; dates = [];
     } finally {
+      computeTodayStats()
       loading = false;
     }
   }
@@ -300,14 +301,25 @@
     : filteredUsers.filter((u) => u.days.some((d) => d.status === statusFilter))
   )
 
-  const todayIdx = $derived(dates.indexOf(new Date().toISOString().split('T')[0]))
-  const todayPresent = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.present).length : 0);
-  const todayAbsent = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'absent').length : 0);
-  const todayLeave = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'leave').length : 0);
-  const todayRest = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'restday').length : 0);
-  const todayHoliday = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'holiday').length : 0);
-  const todayLate = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'late').length : 0);
-  const todayOT = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.overtime).length : 0);
+  let todayPresent = $state(0)
+  let todayAbsent = $state(0)
+  let todayLeave = $state(0)
+  let todayRest = $state(0)
+  let todayHoliday = $state(0)
+  let todayLate = $state(0)
+  let todayOT = $state(0)
+
+  function computeTodayStats() {
+    const idx = dates.indexOf(new Date().toISOString().split('T')[0])
+    if (idx < 0) { todayPresent = 0; todayAbsent = 0; todayLeave = 0; todayRest = 0; todayHoliday = 0; todayLate = 0; todayOT = 0; return }
+    todayPresent = users.filter((u) => u.days[idx]?.present).length
+    todayAbsent = users.filter((u) => u.days[idx]?.status === 'absent').length
+    todayLeave = users.filter((u) => u.days[idx]?.status === 'leave').length
+    todayRest = users.filter((u) => u.days[idx]?.status === 'restday').length
+    todayHoliday = users.filter((u) => u.days[idx]?.status === 'holiday').length
+    todayLate = users.filter((u) => u.days[idx]?.status === 'late').length
+    todayOT = users.filter((u) => u.days[idx]?.overtime).length
+  }
 
   const periodPresent = $derived(users.reduce((sum, u) => sum + u.days.filter((d) => d.present).length, 0));
   const periodAbsent = $derived(users.reduce((sum, u) => sum + u.days.filter((d) => d.status === 'absent').length, 0));
