@@ -323,7 +323,7 @@
             {#each filteredUsers as u}
               <tr>
                 <td>
-                  <span class="discord-id">{u.discordId}</span>
+                  <span class="discord-id" title="Click to copy Discord ID" onclick={(e) => { navigator.clipboard.writeText(u.discordId); (e.target as HTMLElement).textContent = 'Copied!'; setTimeout(() => (e.target as HTMLElement).textContent = u.discordId, 1500); }}>{u.discordId}</span>
                   {#if editingName[u.discordId]}
                     <input type="text" bind:value={nameEdit[u.discordId]} />
                   {:else}
@@ -412,6 +412,7 @@
   .inline-edit input { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; width: 140px; }
   .editable-name { cursor: pointer; border-bottom: 1px dashed #ccc; }
   .editable-name:hover { border-color: #5865f2; }
-  .discord-id { display: block; font-size: 10px; color: #aaa; }
+  .discord-id { display: block; font-size: 10px; color: #aaa; cursor: pointer; }
+  .discord-id:hover { color: #5865f2; text-decoration: underline; }
 
 </style>
