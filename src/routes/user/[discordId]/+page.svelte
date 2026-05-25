@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import { goto } from '$app/navigation'
+  import { goto, afterNavigate } from '$app/navigation'
+  import { onMount } from 'svelte'
 
   interface UserRecord {
     timeIn: string | null
@@ -167,8 +168,9 @@
     URL.revokeObjectURL(url)
   }
 
-  $effect(() => {
-    void discordId
+  onMount(loadMonth)
+
+  afterNavigate(() => {
     monthOffset = 0
     loadMonth()
   })
