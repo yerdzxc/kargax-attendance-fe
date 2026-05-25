@@ -95,7 +95,7 @@
       const userRecords = recordMap.get(u.discordId) || new Map()
       const userLeaves = leaveMap.get(u.discordId) || new Map()
       const { surname, givenName } = parseName(u.username)
-      const restDayLower = u.restDay?.toLowerCase()
+      const restDays = u.restDay?.toLowerCase().split(',').map((d) => d.trim()) || []
 
       let totalPresent = 0
       let totalAbsent = 0
@@ -103,7 +103,7 @@
       const days: AttendanceEntry[] = dateList.map((date) => {
         const rec = userRecords.get(date)
         const m = metaMap.get(date)!
-        const isRestDay = restDayLower === m.dayOfWeek.toLowerCase()
+        const isRestDay = restDays.includes(m.dayOfWeek.toLowerCase())
         const isHoliday = holidaySet.has(date)
         const leaveType = userLeaves.get(date)
         const isFuture = date > new Date().toISOString().split('T')[0]

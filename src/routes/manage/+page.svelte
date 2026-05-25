@@ -24,6 +24,23 @@
   let nameEdit: Record<string, string> = $state({})
   let typeEdit: Record<string, string> = $state({})
   let editingName: Record<string, boolean> = $state({})
+
+  const daysOfWeek = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+
+  function restDayList(discordId: string): string[] {
+    const val = restDayEdit[discordId] || ''
+    return val ? val.split(',').map((d) => d.trim()).filter(Boolean) : []
+  }
+
+  function toggleRestDay(discordId: string, day: string) {
+    let list = restDayList(discordId)
+    if (list.includes(day)) {
+      list = list.filter((d) => d !== day)
+    } else {
+      list.push(day)
+    }
+    restDayEdit[discordId] = list.join(',')
+  }
   let userSearch = $state('')
   let userTypeFilter = $state('all')
   let userActiveFilter = $state('active')
@@ -130,7 +147,7 @@
     const val = restDayEdit[discordId] || ''
     try {
       await setRestDay(discordId, val || null)
-      message = val ? 'Rest day updated.' : 'Rest day cleared.'
+      message = val ? 'Rest day(s) updated.' : 'Rest days cleared.'
     } catch (e) {
       message = e instanceof Error ? e.message : 'Failed to set rest day'
     }
@@ -267,7 +284,7 @@
   {:else if tab === 'restdays'}
     <div class="panel">
       <h2>Rest Days</h2>
-      <p class="hint">Set which day of the week each employee has off (e.g. "Sunday", "Saturday").</p>
+      <p class="hint">Set which day(s) of the week each employee has off. Check all that apply.</p>
       {#if users.length === 0}
         <div class="empty">No users found.</div>
       {:else}
@@ -280,12 +297,14 @@
               <tr>
                 <td>{userLabel(u)}</td>
                 <td>
-                  <select bind:value={restDayEdit[u.discordId]}>
-                    <option value="">— None —</option>
-                    {#each ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as day}
-                      <option value={day}>{day}</option>
+                  <div class="restday-checkboxes">
+                    {#each daysOfWeek as day}
+                      <label class="restday-checkbox">
+                        <input type="checkbox" checked={restDayList(u.discordId).includes(day)} onchange={() => toggleRestDay(u.discordId, day)} />
+                        <span>{day.substring(0, 3)}</span>
+                      </label>
                     {/each}
-                  </select>
+                  </div>
                 </td>
                 <td><button class="btn small primary" onclick={() => saveRestDay(u.discordId)}>Save</button></td>
               </tr>
@@ -408,6 +427,9 @@
   .user-filters input { flex: 1; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
   .user-filters select { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
   .user-count { font-size: 12px; color: #888; white-space: nowrap; }
+  .restday-checkboxes { display: flex; gap: 6px; flex-wrap: wrap; }
+  .restday-checkbox { display: flex; align-items: center; gap: 2px; font-size: 11px; cursor: pointer; }
+  .restday-checkbox input { margin: 0; }
   .inline-edit { display: flex; gap: 4px; align-items: center; }
   .inline-edit input { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; width: 140px; }
   .editable-name { cursor: pointer; border-bottom: 1px dashed #ccc; }
