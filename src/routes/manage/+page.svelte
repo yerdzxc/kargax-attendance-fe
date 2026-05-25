@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition, setName, setUserType } from '$lib/api'
+  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition, setName, setUserType, batchSetActive, batchSetType } from '$lib/api'
   import type { HolidayRecord, LeaveRecord, ExportUser } from '$lib/types'
 
   let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users'>('holidays')
@@ -24,6 +24,8 @@
   let nameEdit: Record<string, string> = $state({})
   let typeEdit: Record<string, string> = $state({})
   let editingName: Record<string, boolean> = $state({})
+  let selected = $state<Set<string>>(new Set())
+  let bulkType = $state('employee')
 
   const daysOfWeek = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 
@@ -40,6 +42,41 @@
       list.push(day)
     }
     restDayEdit[discordId] = list.join(',')
+  }
+
+  function toggleSelect(discordId: string) {
+    if (selected.has(discordId)) selected.delete(discordId)
+    else selected.add(discordId)
+    selected = new Set(selected)
+  }
+
+  function toggleSelectAll() {
+    if (selected.size === filteredUsers.length) {
+      selected = new Set()
+    } else {
+      selected = new Set(filteredUsers.map((u) => u.discordId))
+    }
+  }
+
+  async function batchAction(action: 'activate' | 'deactivate' | 'change-type') {
+    if (selected.size === 0) return
+    const ids = [...selected]
+    try {
+      if (action === 'activate') {
+        await batchSetActive(ids, true)
+        message = `${ids.length} user(s) reactivated.`
+      } else if (action === 'deactivate') {
+        await batchSetActive(ids, false)
+        message = `${ids.length} user(s) deactivated.`
+      } else {
+        await batchSetType(ids, bulkType)
+        message = `${ids.length} user(s) type changed to ${bulkType}.`
+      }
+      selected = new Set()
+      allUsers = await listUsers()
+    } catch (e) {
+      message = e instanceof Error ? e.message : 'Batch action failed'
+    }
   }
   let userSearch = $state('')
   let userTypeFilter = $state('all')
@@ -331,16 +368,33 @@
         </select>
         <span class="user-count">{filteredUsers.length} users</span>
       </div>
+      {#if selected.size > 0}
+        <div class="bulk-bar">
+          <span class="bulk-count">{selected.size} selected</span>
+          <button class="btn small primary" onclick={() => batchAction('activate')}>Reactivate</button>
+          <button class="btn small danger" onclick={() => batchAction('deactivate')}>Deactivate</button>
+          <select bind:value={bulkType} class="bulk-type-select">
+            <option value="employee">Employee</option>
+            <option value="intern">Intern</option>
+          </select>
+          <button class="btn small primary" onclick={() => batchAction('change-type')}>Change Type</button>
+          <button class="btn small" onclick={() => selected = new Set()}>Clear</button>
+        </div>
+      {/if}
       {#if filteredUsers.length === 0}
         <div class="empty">No users match your filter.</div>
       {:else}
         <table class="list">
           <thead>
-            <tr><th>User</th><th>Type</th><th>Position</th><th>Status</th><th>Last Access</th><th></th></tr>
+            <tr>
+              <th class="chk"><input type="checkbox" checked={selected.size === filteredUsers.length && filteredUsers.length > 0} onchange={toggleSelectAll} /></th>
+              <th>User</th><th>Type</th><th>Position</th><th>Status</th><th>Last Access</th><th></th>
+            </tr>
           </thead>
           <tbody>
             {#each filteredUsers as u}
               <tr>
+                <td class="chk"><input type="checkbox" checked={selected.has(u.discordId)} onchange={() => toggleSelect(u.discordId)} /></td>
                 <td>
                   <span class="discord-id" title="Click to copy Discord mention (&lt;@ID&gt;)" onclick={(e) => { navigator.clipboard.writeText(`<@${u.discordId}>`); const el = e.target as HTMLElement; el.textContent = '@Copied!'; setTimeout(() => el.textContent = '@' + u.discordId, 1500); }}>@{u.discordId}</span>
                   {#if editingName[u.discordId]}
@@ -427,6 +481,10 @@
   .user-filters input { flex: 1; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
   .user-filters select { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
   .user-count { font-size: 12px; color: #888; white-space: nowrap; }
+  .bulk-bar { display: flex; gap: 8px; align-items: center; padding: 10px 12px; background: #f0f4ff; border-radius: 8px; margin-bottom: 12px; }
+  .bulk-count { font-size: 12px; font-weight: 600; color: #5865f2; }
+  .bulk-type-select { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+  .chk { width: 32px; text-align: center; }
   .restday-checkboxes { display: flex; gap: 6px; flex-wrap: wrap; }
   .restday-checkbox { display: flex; align-items: center; gap: 2px; font-size: 11px; cursor: pointer; }
   .restday-checkbox input { margin: 0; }

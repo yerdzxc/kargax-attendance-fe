@@ -105,6 +105,22 @@ export async function setUserType(discordId: string, type: string): Promise<void
   })
 }
 
+export async function batchSetActive(discordIds: string[], active: boolean): Promise<void> {
+  await fetch(`${BASE}/users/batch-set-active`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordIds, active }),
+  })
+}
+
+export async function batchSetType(discordIds: string[], type: string): Promise<void> {
+  await fetch(`${BASE}/users/batch-set-type`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordIds, type }),
+  })
+}
+
 export async function correctTime(discordUserId: string, signatureDate: string, timeIn?: string, timeOut?: string, late?: boolean): Promise<void> {
   await fetch(`${BASE}/correct-time`, {
     method: 'POST',
