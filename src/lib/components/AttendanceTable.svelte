@@ -218,11 +218,17 @@
                         <span class="time-in">{day.timeIn || '--'}</span>
                         <span class="time-arrow">→</span>
                         <span class="time-out">{day.timeOut || '--'}</span>
+                        {#if day.timeOut && day.expectedTimeOut}
+                          <span class="time-exp">({day.expectedTimeOut})</span>
+                        {/if}
                         {#if day.status === 'late'}
                           <span class="late-icon" title="Late">⚠</span>
                         {/if}
                         {#if day.overtime}
                           <span class="ot-icon" title="Overtime">+</span>
+                        {/if}
+                        {#if day.earlyLeave}
+                          <span class="early-icon" title="Left early">⌛</span>
                         {/if}
                       </span>
                     {/if}
@@ -277,6 +283,8 @@
   .day-future { color: #ccc; font-size: 12px; }
   .late-icon { color: #f59e0b; font-size: 11px; }
   .ot-icon { color: #22c55e; font-weight: 700; font-size: 11px; }
+  .early-icon { color: #6366f1; font-size: 11px; }
+  .time-exp { font-size: 10px; color: #94a3b8; }
   .time-edit-popup { display: flex; flex-direction: column; gap: 4px; padding: 6px; background: white; border: 2px solid #5865f2; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); position: absolute; z-index: 10; min-width: 160px; }
   .time-edit-row { display: flex; align-items: center; gap: 4px; }
   .time-input { width: 48px; padding: 3px 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; font-weight: 500; text-align: center; outline: none; }

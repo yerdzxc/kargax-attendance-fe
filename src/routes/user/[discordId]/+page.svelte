@@ -8,6 +8,7 @@
     timeOut: string | null
     signatureDate: string | null
     late: boolean
+    expectedTimeOut: string | null
   }
 
   interface LeaveEntry {
@@ -160,7 +161,7 @@
   }
 
   function downloadCSV() {
-    const rows: string[][] = [['Date', 'Day', 'Time In', 'Time Out', 'Status']]
+    const rows: string[][] = [['Date', 'Day', 'Time In', 'Expected Out', 'Time Out', 'Status']]
     for (const date of dates) {
       const rec = coveredRecords(date) || records.get(date)
       const day = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })
@@ -169,6 +170,7 @@
         date,
         day,
         rec ? formatTime(rec.timeIn) : '',
+        rec ? formatTime(rec.expectedTimeOut) : '',
         rec ? formatTime(rec.timeOut) || '--' : '',
         holidays.has(date) ? `Holiday: ${holidays.get(date)}` : leaves.has(date) ? `Leave: ${leaves.get(date)}` : status,
       ])
@@ -228,6 +230,7 @@
             <th>Date</th>
             <th>Day</th>
             <th>Time In</th>
+            <th>Expected Out</th>
             <th>Time Out</th>
             <th>Status</th>
             <th>OT</th>
@@ -247,8 +250,18 @@
                 {/if}
               </td>
               <td class="time-cell">
+                {#if rec?.expectedTimeOut}
+                  {formatTime(rec.expectedTimeOut)}
+                {:else if !isFuture(date)}
+                  <span class="absent-marker">—</span>
+                {/if}
+              </td>
+              <td class="time-cell">
                 {#if rec}
                   {formatTime(rec.timeOut) || '--'}
+                  {#if rec.timeOut && rec.expectedTimeOut && new Date(rec.timeOut) < new Date(rec.expectedTimeOut)}
+                    <span class="early-icon" title="Left early">⌛</span>
+                  {/if}
                 {:else if !isFuture(date)}
                   <span class="absent-marker">—</span>
                 {/if}
@@ -276,7 +289,8 @@
       </div>
       <div class="legend-notes">
         <strong>OT indicator (+):</strong> day shift (>6PM) / night shift (>6AM if clock-in ≥2PM) — <em>visual hint only, not official OT</em><br>
-        <strong>Day-spanning:</strong> night shifts covering the next day won't show as absent
+        <strong>Day-spanning:</strong> night shifts covering the next day won't show as absent<br>
+        <strong>Expected Out:</strong> auto-computed as time-in + 9h; ⌛ indicates left early
       </div>
     </div>
   {/if}
@@ -302,8 +316,8 @@
   .error { color: #dc2626; }
   .table-scroll { overflow-x: auto; background: white; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { background: #f8f9fa; padding: 10px 12px; font-weight: 600; color: #555; text-align: left; border-bottom: 2px solid #eee; }
-  td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
+  th { background: #f8f9fa; padding: 10px 8px; font-weight: 600; color: #555; text-align: left; border-bottom: 2px solid #eee; }
+  td { padding: 8px 8px; border-bottom: 1px solid #f0f0f0; }
   .day-row:hover td { background: #f8f9fa; }
   .day-row.present td { background: #f0fdf4; }
   .day-row.late td { background: #fffbeb; }
@@ -316,6 +330,7 @@
   .day-cell { color: #888; font-size: 12px; }
   .time-cell { font-variant-numeric: tabular-nums; }
   .absent-marker { color: #ccc; }
+  .early-icon { color: #6366f1; font-size: 11px; margin-left: 2px; }
   .status-cell { display: flex; align-items: center; gap: 6px; }
   .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.3px; }
   .badge-present { background: #dcfce7; color: #16a34a; }

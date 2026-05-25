@@ -5,6 +5,7 @@ export interface AttendanceRecord {
   timeOut: string | null
   signatureDate: string | null
   late: boolean
+  expectedTimeOut: string | null
 }
 
 export interface ExportUser {
@@ -41,12 +42,14 @@ export interface AttendanceEntry {
   dayLabel: string
   timeIn: string
   timeOut: string
+  expectedTimeOut: string
   present: boolean
   status: 'present' | 'late' | 'absent' | 'restday' | 'holiday' | 'leave' | 'future'
   leaveType?: string
   holidayName?: string
   overtime: boolean
   noTimeOut: boolean
+  earlyLeave: boolean
 }
 
 export interface OvertimeRequest {
@@ -60,6 +63,7 @@ export interface OvertimeRequest {
   created_at: string
   updated_at: string | null
 }
+export interface UserAttendance {
   discordId: string
   username: string
   surname: string

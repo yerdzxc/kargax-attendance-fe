@@ -95,11 +95,11 @@
       holidayNames.set(h.date, h.name)
     }
 
-    const recordMap = new Map<string, Map<string, { timeIn: string | null; timeOut: string | null; late: boolean }>>()
+    const recordMap = new Map<string, Map<string, { timeIn: string | null; timeOut: string | null; late: boolean; expectedTimeOut: string | null }>>()
     for (const r of data.records) {
       if (!r.signatureDate) continue
       if (!recordMap.has(r.discordUserId)) recordMap.set(r.discordUserId, new Map())
-      recordMap.get(r.discordUserId)!.set(r.signatureDate, { timeIn: r.timeIn, timeOut: r.timeOut, late: r.late })
+      recordMap.get(r.discordUserId)!.set(r.signatureDate, { timeIn: r.timeIn, timeOut: r.timeOut, late: r.late, expectedTimeOut: r.expectedTimeOut })
     }
 
     return data.users.map((u) => {
@@ -108,7 +108,7 @@
       const { surname, givenName } = parseName(u.username)
       const restDays = u.restDay?.toLowerCase().split(',').map((d) => d.trim()) || []
 
-      const coveredDates = new Map<string, { timeIn: string | null; timeOut: string | null; late: boolean }>()
+      const coveredDates = new Map<string, { timeIn: string | null; timeOut: string | null; late: boolean; expectedTimeOut: string | null }>()
       for (const [date, rec] of userRecords) {
         coveredDates.set(date, rec)
         const tod = getDateFromIso(rec.timeOut)
@@ -145,17 +145,26 @@
         if (present) totalPresent++
         else if (status === 'absent') totalAbsent++
 
+        let earlyLeave = false
+        if (rec?.timeOut && rec?.expectedTimeOut) {
+          const actual = new Date(rec.timeOut)
+          const expected = new Date(rec.expectedTimeOut)
+          if (actual < expected) earlyLeave = true
+        }
+
         return {
           date,
           dayLabel: m.dayLabel,
           timeIn: formatTime(rec?.timeIn),
           timeOut: formatTime(rec?.timeOut),
+          expectedTimeOut: formatTime(rec?.expectedTimeOut),
           present,
           status,
           leaveType,
           holidayName: isHoliday ? holidayNames.get(date) : undefined,
           overtime: rec ? isOvertime(rec.timeOut, rec.timeIn) : false,
           noTimeOut: rec ? !rec.timeOut : false,
+          earlyLeave,
         }
       })
 
@@ -393,7 +402,8 @@
       </div>
       <div class="legend-notes">
         <strong>OT indicator (+):</strong> day shift (>6PM) / night shift (>6AM if clock-in ≥2PM) — <em>visual hint only, not official OT</em><br>
-        <strong>Day-spanning:</strong> night shifts covering the next day won't show as absent
+        <strong>Day-spanning:</strong> night shifts covering the next day won't show as absent<br>
+        <strong>Expected Out:</strong> auto-computed as time-in + 9h; ⌛ indicates left early
       </div>
     </details>
 
