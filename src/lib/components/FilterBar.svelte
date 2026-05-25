@@ -10,6 +10,7 @@
     onDateChange,
     onPreset,
     onDownload,
+    onPrint,
     onRefresh,
   }: {
     from: string
@@ -22,6 +23,7 @@
     onDateChange: (from: string, to: string) => void
     onPreset: (preset: string) => void
     onDownload: () => void
+    onPrint: () => void
     onRefresh: () => void
   } = $props()
 
@@ -86,6 +88,9 @@
     </button>
     <button class="btn secondary" onclick={onDownload} disabled={loading}>
       Download CSV
+    </button>
+    <button class="btn secondary" onclick={onPrint} disabled={loading}>
+      Print / PDF
     </button>
   </div>
 </div>

@@ -368,6 +368,7 @@
       onDateChange={handleDateChange}
       onPreset={handlePreset}
       onDownload={handleDownload}
+      onPrint={() => window.print()}
       onRefresh={load}
     />
 
