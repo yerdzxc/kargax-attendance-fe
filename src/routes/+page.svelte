@@ -299,6 +299,12 @@
   const todayLate = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'late').length : 0);
   const todayOT = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.overtime).length : 0);
 
+  const periodPresent = $derived(users.reduce((sum, u) => sum + u.days.filter((d) => d.present).length, 0));
+  const periodAbsent = $derived(users.reduce((sum, u) => sum + u.days.filter((d) => d.status === 'absent').length, 0));
+  const periodLate = $derived(users.reduce((sum, u) => sum + u.days.filter((d) => d.status === 'late').length, 0));
+  const periodLeave = $derived(users.reduce((sum, u) => sum + u.days.filter((d) => d.status === 'leave').length, 0));
+  const periodRest = $derived(users.reduce((sum, u) => sum + u.days.filter((d) => d.status === 'restday').length, 0));
+
   const absentUsers = $derived(
     displayedUsers
       .filter((u) => u.days.some((d) => d.status === 'absent'))
@@ -348,6 +354,11 @@
       totalHoliday={todayHoliday}
       totalLate={todayLate}
       totalOT={todayOT}
+      periodPresent={periodPresent}
+      periodAbsent={periodAbsent}
+      periodLate={periodLate}
+      periodLeave={periodLeave}
+      periodRest={periodRest}
     />
 
     <FilterBar

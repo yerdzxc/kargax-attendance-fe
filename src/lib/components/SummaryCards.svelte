@@ -8,6 +8,11 @@
     totalHoliday = 0,
     totalLate = 0,
     totalOT = 0,
+    periodPresent = 0,
+    periodAbsent = 0,
+    periodLate = 0,
+    periodLeave = 0,
+    periodRest = 0,
   }: {
     totalUsers: number
     totalPresent: number
@@ -17,9 +22,15 @@
     totalHoliday?: number
     totalLate?: number
     totalOT?: number
+    periodPresent?: number
+    periodAbsent?: number
+    periodLate?: number
+    periodLeave?: number
+    periodRest?: number
   } = $props()
 </script>
 
+<div class="section-label">Today</div>
 <div class="cards">
   <div class="card present">
     <span class="count">{totalPresent}</span>
@@ -55,7 +66,32 @@
   </div>
 </div>
 
+<div class="section-label">This Period</div>
+<div class="cards">
+  <div class="card present">
+    <span class="count">{periodPresent}</span>
+    <span class="label">Present</span>
+  </div>
+  <div class="card absent">
+    <span class="count">{periodAbsent}</span>
+    <span class="label">Absences</span>
+  </div>
+  <div class="card late">
+    <span class="count">{periodLate}</span>
+    <span class="label">Late Entries</span>
+  </div>
+  <div class="card leave">
+    <span class="count">{periodLeave}</span>
+    <span class="label">Leave Days</span>
+  </div>
+  <div class="card rest">
+    <span class="count">{periodRest}</span>
+    <span class="label">Rest Days</span>
+  </div>
+</div>
+
 <style>
+  .section-label { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
   .card { background: white; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   .count { display: block; font-size: 28px; font-weight: 800; line-height: 1.2; }
