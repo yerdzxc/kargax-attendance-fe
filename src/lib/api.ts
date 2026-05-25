@@ -1,4 +1,4 @@
-import type { ExportData, LeaveRecord, HolidayRecord } from '$lib/types'
+import type { ExportData, LeaveRecord, HolidayRecord, OvertimeRequest } from '$lib/types'
 
 const BASE = '/api'
 
@@ -126,6 +126,40 @@ export async function correctTime(discordUserId: string, signatureDate: string, 
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ discordUserId, signatureDate, timeIn, timeOut, late }),
+  })
+}
+
+export async function listOvertimeRequests(from?: string, to?: string, status?: string): Promise<OvertimeRequest[]> {
+  const params = new URLSearchParams()
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  if (status) params.set('status', status)
+  const res = await fetch(`${BASE}/overtime/requests?${params}`)
+  if (!res.ok) throw new Error('Failed to load OT requests')
+  return res.json()
+}
+
+export async function approveOvertime(id: number, note?: string): Promise<void> {
+  await fetch(`${BASE}/overtime/${id}/approve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ note }),
+  })
+}
+
+export async function rejectOvertime(id: number, note?: string): Promise<void> {
+  await fetch(`${BASE}/overtime/${id}/reject`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ note }),
+  })
+}
+
+export async function createOvertimeRequest(discordUserId: string, date: string, hours: number, type: 'pre' | 'post', note?: string): Promise<void> {
+  await fetch(`${BASE}/overtime/request`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordUserId, date, hours, type, note }),
   })
 }
 

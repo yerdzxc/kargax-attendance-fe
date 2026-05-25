@@ -1,15 +1,18 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition, setName, setUserType, batchSetActive, batchSetType } from '$lib/api'
-  import type { HolidayRecord, LeaveRecord, ExportUser } from '$lib/types'
+  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition, setName, setUserType, batchSetActive, batchSetType, listOvertimeRequests, approveOvertime, rejectOvertime } from '$lib/api'
+  import type { HolidayRecord, LeaveRecord, ExportUser, OvertimeRequest } from '$lib/types'
 
-  let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users' | 'activity'>('holidays')
+  let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users' | 'activity' | 'overtime'>('holidays')
 
   let holidays: HolidayRecord[] = $state([])
   let leaves: LeaveRecord[] = $state([])
   let users: ExportUser[] = $state([])
   let allUsers = $state<{ discordId: string; username: string; type: string; active: boolean; lastAccess: string | null; position: string | null }[]>([])
   let activityLog = $state<{ id: number; action: string; targetId: string | null; detail: string | null; created_at: string }[]>([])
+  let overtimeRequests = $state<OvertimeRequest[]>([])
+  let otNote = $state<Record<number, string>>({})
+  let otStatusFilter = $state<string>('pending')
   let loading = $state(true)
   let message = $state('')
 
@@ -104,23 +107,46 @@
     return { from: fmt(monday), to: fmt(sunday) }
   }
 
+  async function loadOvertime() {
+    try {
+      const range = weekRange()
+      overtimeRequests = await listOvertimeRequests(range.from, range.to)
+    } catch (e) {
+      message = e instanceof Error ? e.message : 'Failed to load OT requests'
+    }
+  }
+
+  async function handleApprove(id: number) {
+    await approveOvertime(id, otNote[id] || undefined)
+    message = 'Overtime approved.'
+    loadOvertime()
+  }
+
+  async function handleReject(id: number) {
+    await rejectOvertime(id, otNote[id] || undefined)
+    message = 'Overtime rejected.'
+    loadOvertime()
+  }
+
   async function load() {
     loading = true
     message = ''
     try {
       const range = weekRange()
-      const [h, l, data, all, log] = await Promise.all([
+      const [h, l, data, all, log, ots] = await Promise.all([
         listHolidays(),
         listLeaves(),
         fetchAttendance(range.from, range.to, 'employee'),
         listUsers(),
         fetch('/api/activity-log').then((r) => r.json()),
+        listOvertimeRequests(undefined, undefined, 'pending'),
       ])
       holidays = h
       leaves = l
       users = data.users
       allUsers = all
       activityLog = log
+      overtimeRequests = ots
       for (const u of users) {
         restDayEdit[u.discordId] = u.restDay || ''
       }
@@ -253,6 +279,7 @@
     <button class="tab" class:active={tab === 'restdays'} onclick={() => tab = 'restdays'}>Rest Days</button>
     <button class="tab" class:active={tab === 'users'} onclick={() => tab = 'users'}>Users</button>
     <button class="tab" class:active={tab === 'activity'} onclick={() => tab = 'activity'}>Activity</button>
+    <button class="tab" class:active={tab === 'overtime'} onclick={() => { tab = 'overtime'; loadOvertime() }}>Overtime</button>
   </div>
 
   {#if loading}
@@ -461,6 +488,53 @@
         </table>
       {/if}
     </div>
+  {:else if tab === 'overtime'}
+    <div class="panel">
+      <div class="section-header">
+        <h2>Overtime Requests</h2>
+        <select class="status-filter" bind:value={otStatusFilter}>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="">All</option>
+        </select>
+      </div>
+      <div class="ot-actions">
+        <button class="btn-refresh" onclick={loadOvertime}>↻ Refresh</button>
+      </div>
+      {#if overtimeRequests.length === 0}
+        <div class="empty">No overtime requests found.</div>
+      {:else}
+        <table class="list">
+          <thead>
+            <tr><th>Date</th><th>User</th><th>Type</th><th>Hours</th><th>Note</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {#each overtimeRequests.filter((r) => !otStatusFilter || r.status === otStatusFilter) as req}
+              <tr>
+                <td>{req.date}</td>
+                <td>@{req.discordUserId}</td>
+                <td class="ot-type">{req.type === 'pre' ? 'Pre-shift' : 'Post-shift'}</td>
+                <td>{req.hours}h</td>
+                <td class="log-detail">{req.note || '—'}</td>
+                <td><span class="status-badge status-{req.status}">{req.status}</span></td>
+                <td>
+                  {#if req.status === 'pending'}
+                    <div class="ot-actions-row">
+                      <input class="ot-note-input" type="text" placeholder="Note..." bind:value={otNote[req.id]} />
+                      <button class="btn-approve" onclick={() => handleApprove(req.id)}>✓</button>
+                      <button class="btn-reject" onclick={() => handleReject(req.id)}>✗</button>
+                    </div>
+                  {:else}
+                    <span class="muted">{req.status === 'approved' ? 'Approved' : 'Rejected'}</span>
+                  {/if}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      {/if}
+    </div>
   {/if}
 </div>
 
@@ -527,5 +601,23 @@
   .log-time { font-size: 11px; color: #888; white-space: nowrap; }
   .log-action { text-transform: capitalize; }
   .log-detail { font-size: 12px; color: #555; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .section-header h2 { margin: 0; }
+  .status-filter { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+  .ot-actions { margin-bottom: 12px; }
+  .btn-refresh { padding: 6px 14px; border: 1px solid #ddd; border-radius: 6px; background: white; font-size: 12px; cursor: pointer; }
+  .btn-refresh:hover { border-color: #5865f2; color: #5865f2; }
+  .ot-actions-row { display: flex; gap: 4px; align-items: center; }
+  .ot-note-input { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; width: 100px; }
+  .btn-approve { padding: 4px 10px; border: 1px solid #22c55e; border-radius: 4px; background: white; color: #22c55e; font-size: 13px; cursor: pointer; }
+  .btn-approve:hover { background: #22c55e; color: white; }
+  .btn-reject { padding: 4px 10px; border: 1px solid #ef4444; border-radius: 4px; background: white; color: #ef4444; font-size: 13px; cursor: pointer; }
+  .btn-reject:hover { background: #ef4444; color: white; }
+  .ot-type { font-size: 12px; text-transform: capitalize; }
+  .status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .status-pending { background: #fef3c7; color: #d97706; }
+  .status-approved { background: #dcfce7; color: #16a34a; }
+  .status-rejected { background: #fef2f2; color: #dc2626; }
+  .muted { color: #aaa; font-size: 12px; }
 
 </style>

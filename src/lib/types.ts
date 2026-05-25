@@ -48,7 +48,17 @@ export interface AttendanceEntry {
   noTimeOut: boolean
 }
 
-export interface UserAttendance {
+export interface OvertimeRequest {
+  id: number
+  discordUserId: string
+  date: string
+  hours: number
+  type: 'pre' | 'post'
+  status: 'pending' | 'approved' | 'rejected'
+  note: string | null
+  created_at: string
+  updated_at: string | null
+}
   discordId: string
   username: string
   surname: string
