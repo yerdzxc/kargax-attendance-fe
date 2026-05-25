@@ -529,8 +529,8 @@
             <thead><tr><th>Option</th><th>Description</th><th>Limits</th></tr></thead>
             <tbody>
               <tr><td><code>date</code></td><td>Date of overtime (YYYY-MM-DD)</td><td>—</td></tr>
-              <tr><td><code>hours</code></td><td>Number of OT hours</td><td><strong>Post-shift:</strong> max 5h<br><strong>Pre-shift:</strong> max 3h</td></tr>
-              <tr><td><code>type</code></td><td><code>post</code> (after shift) or <code>pre</code> (before shift)</td><td>Post: 6PM–11PM window<br>Pre: 6AM–9AM window</td></tr>
+              <tr><td><code>hours</code></td><td>Number of OT hours</td><td><strong>Post-shift:</strong> max 5h<br><strong>Pre-shift:</strong> max 3h<br><strong>Rest Day:</strong> max 8h<br><strong>Holiday:</strong> no limit</td></tr>
+              <tr><td><code>type</code></td><td><code>post</code> / <code>pre</code> / <code>rd</code> / <code>holiday</code></td><td>Post: after shift<br>Pre: before shift<br>RD: rest day OT<br>Holiday: holiday OT</td></tr>
               <tr><td><code>reason</code></td><td>Optional note</td><td>—</td></tr>
             </tbody>
           </table>
@@ -552,6 +552,8 @@
           <select class="ot-field" bind:value={otNewType}>
             <option value="post">Post-shift</option>
             <option value="pre">Pre-shift</option>
+            <option value="rd">Rest Day</option>
+            <option value="holiday">Holiday</option>
           </select>
           <input class="ot-field" type="text" placeholder="Reason..." bind:value={otNewNote} />
           <button class="btn-ot-submit" onclick={handleCreateOt}>File OT</button>
