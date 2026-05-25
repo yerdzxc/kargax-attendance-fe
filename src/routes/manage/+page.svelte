@@ -26,7 +26,7 @@
   let editingName: Record<string, boolean> = $state({})
   let userSearch = $state('')
   let userTypeFilter = $state('all')
-  let userActiveFilter = $state('all')
+  let userActiveFilter = $state('active')
 
   const filteredUsers = $derived(
     allUsers.filter((u) => {
