@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition } from '$lib/api'
+  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition, setName } from '$lib/api'
   import type { HolidayRecord, LeaveRecord, ExportUser } from '$lib/types'
 
   let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users'>('holidays')
@@ -21,6 +21,8 @@
 
   let restDayEdit: Record<string, string> = $state({})
   let positionEdit: Record<string, string> = $state({})
+  let nameEdit: Record<string, string> = $state({})
+  let editingName: Record<string, boolean> = $state({})
   let userSearch = $state('')
   let userTypeFilter = $state('all')
   let userActiveFilter = $state('all')
@@ -65,6 +67,7 @@
       }
       for (const u of all) {
         positionEdit[u.discordId] = u.position || ''
+        nameEdit[u.discordId] = u.username || ''
       }
     } catch (e) {
       message = e instanceof Error ? e.message : 'Failed to load data'
@@ -138,6 +141,23 @@
       message = val ? 'Position updated.' : 'Position cleared.'
     } catch (e) {
       message = e instanceof Error ? e.message : 'Failed to set position'
+    }
+  }
+
+  function startNameEdit(discordId: string) {
+    editingName[discordId] = true
+  }
+
+  async function saveName(discordId: string) {
+    const val = nameEdit[discordId]?.trim()
+    if (!val) return
+    try {
+      await setName(discordId, val)
+      editingName[discordId] = false
+      allUsers = allUsers.map((u) => u.discordId === discordId ? { ...u, username: val } : u)
+      message = 'Name updated.'
+    } catch (e) {
+      message = e instanceof Error ? e.message : 'Failed to update name'
     }
   }
 
@@ -302,7 +322,17 @@
           <tbody>
             {#each filteredUsers as u}
               <tr>
-                <td>{u.username || u.discordId}</td>
+                <td>
+                  {#if editingName[u.discordId]}
+                    <div class="inline-edit">
+                      <input type="text" bind:value={nameEdit[u.discordId]} />
+                      <button class="btn small primary" onclick={() => saveName(u.discordId)}>Save</button>
+                      <button class="btn small" onclick={() => { editingName[u.discordId] = false; nameEdit[u.discordId] = u.username }}>Cancel</button>
+                    </div>
+                  {:else}
+                    <span class="editable-name" ondblclick={() => startNameEdit(u.discordId)}>{u.username || u.discordId}</span>
+                  {/if}
+                </td>
                 <td style="text-transform:capitalize">{u.type}</td>
                 <td>
                   <div class="inline-edit">
@@ -377,5 +407,7 @@
   .user-count { font-size: 12px; color: #888; white-space: nowrap; }
   .inline-edit { display: flex; gap: 4px; align-items: center; }
   .inline-edit input { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; width: 140px; }
+  .editable-name { cursor: pointer; border-bottom: 1px dashed #ccc; }
+  .editable-name:hover { border-color: #5865f2; }
 
 </style>
