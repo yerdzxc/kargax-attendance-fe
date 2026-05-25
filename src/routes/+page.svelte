@@ -374,7 +374,7 @@
         <span class="legend-item"><span class="badge badge-bdl">BDL</span> Birthday Leave</span>
         <span class="legend-item"><span class="badge badge-ob">OB</span> Official Business</span>
         <span class="legend-item"><span class="ot-icon">+</span> Overtime</span>
-        <span class="legend-item"><span class="late-icon">⚠</span> Late (manually set by HR)</span>
+        <span class="legend-item"><span class="late-icon">⚠</span> Late (day shift >9:15AM, auto-detected; night shift manual)</span>
       </div>
       <div class="legend-notes">
         <strong>OT indicator (+):</strong> day shift (>6PM) / night shift (>6AM if clock-in ≥2PM) — <em>visual hint only, not official OT</em><br>
