@@ -338,12 +338,14 @@
               <tr>
                 <td>{userLabel(u)}</td>
                 <td>
-                  <div class="restday-checkboxes">
+                  <div class="restday-pills">
                     {#each daysOfWeek as day}
-                      <label class="restday-checkbox">
-                        <input type="checkbox" checked={restDayList(u.discordId).includes(day)} onchange={() => toggleRestDay(u.discordId, day)} />
-                        <span>{day.substring(0, 3)}</span>
-                      </label>
+                      {@const active = restDayList(u.discordId).includes(day)}
+                      <button
+                        class="restday-pill"
+                        class:active
+                        onclick={() => toggleRestDay(u.discordId, day)}
+                      >{day.substring(0, 3)}</button>
                     {/each}
                   </div>
                 </td>
@@ -512,9 +514,10 @@
   .bulk-count { font-size: 12px; font-weight: 600; color: #5865f2; }
   .bulk-type-select { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
   .chk { width: 32px; text-align: center; }
-  .restday-checkboxes { display: flex; gap: 6px; flex-wrap: wrap; }
-  .restday-checkbox { display: flex; align-items: center; gap: 2px; font-size: 11px; cursor: pointer; }
-  .restday-checkbox input { margin: 0; }
+  .restday-pills { display: flex; gap: 4px; flex-wrap: wrap; }
+  .restday-pill { padding: 3px 10px; border: 1px solid #ddd; border-radius: 12px; background: white; font-size: 11px; color: #888; cursor: pointer; transition: all 0.15s; }
+  .restday-pill:hover { border-color: #5865f2; color: #5865f2; }
+  .restday-pill.active { background: #5865f2; border-color: #5865f2; color: white; }
   .inline-edit { display: flex; gap: 4px; align-items: center; }
   .inline-edit input { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; width: 140px; }
   .editable-name { cursor: pointer; border-bottom: 1px dashed #ccc; }
