@@ -518,6 +518,24 @@
         </select>
       </div>
 
+      <details class="ot-info">
+        <summary>How employees file overtime via Discord</summary>
+        <div class="ot-info-content">
+          <p>Employees use the <code>/ot</code> command in Discord:</p>
+          <div class="ot-cmd">
+            <code>/ot date:2026-05-26 hours:2 type:post reason:Finishing report</code>
+          </div>
+          <table class="ot-info-table">
+            <tr><th>Option</th><th>Description</th><th>Limits</th></tr>
+            <tr><td><code>date</code></td><td>Date of overtime (YYYY-MM-DD)</td><td>—</td></tr>
+            <tr><td><code>hours</code></td><td>Number of OT hours</td><td><strong>Post-shift:</strong> max 5h<br><strong>Pre-shift:</strong> max 3h</td></tr>
+            <tr><td><code>type</code></td><td><code>post</code> (after shift) or <code>pre</code> (before shift)</td><td>Post: 6PM–11PM window<br>Pre: 6AM–9AM window</td></tr>
+            <tr><td><code>reason</code></td><td>Optional note</td><td>—</td></tr>
+          </table>
+          <p>Once filed, the request appears here as <span class="status-badge status-pending">pending</span> for HR to review.</p>
+        </div>
+      </details>
+
       <details class="ot-form">
         <summary>File Overtime for Employee</summary>
         <div class="ot-form-fields">
@@ -666,5 +684,12 @@
   .ot-field[type="date"] { width: 140px; }
   .btn-ot-submit { padding: 6px 14px; border: none; border-radius: 6px; background: #4f46e5; color: white; font-size: 13px; cursor: pointer; }
   .btn-ot-submit:hover { background: #4338ca; }
+  .ot-info { margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #f0fdf4; }
+  .ot-info summary { font-size: 13px; font-weight: 600; color: #16a34a; cursor: pointer; }
+  .ot-info-content { margin-top: 10px; font-size: 13px; color: #444; line-height: 1.6; }
+  .ot-cmd { background: #1a1a2e; color: #e2e8f0; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin: 8px 0; overflow-x: auto; }
+  .ot-info-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+  .ot-info-table th { background: #f8f9fa; padding: 6px 10px; text-align: left; font-weight: 600; color: #555; border-bottom: 1px solid #eee; }
+  .ot-info-table td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
 
 </style>
