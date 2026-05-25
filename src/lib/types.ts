@@ -26,6 +26,7 @@ export interface HolidayRecord {
   id: number
   date: string
   name: string
+  recurring: boolean
 }
 
 export interface ExportData {

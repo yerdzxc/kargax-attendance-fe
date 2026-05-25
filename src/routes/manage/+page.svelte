@@ -23,6 +23,18 @@
 
   let newHolidayDate = $state('')
   let newHolidayName = $state('')
+  let newHolidayRecurring = $state(false)
+
+  const phHolidays: { name: string; date: string }[] = [
+    { name: 'New Year\'s Day', date: '2026-01-01' },
+    { name: 'Araw ng Kagitingan', date: '2026-04-09' },
+    { name: 'Labor Day', date: '2026-05-01' },
+    { name: 'Independence Day', date: '2026-06-12' },
+    { name: 'National Heroes Day', date: '2026-08-31' },
+    { name: 'Bonifacio Day', date: '2026-11-30' },
+    { name: 'Christmas Day', date: '2026-12-25' },
+    { name: 'Rizal Day', date: '2026-12-30' },
+  ]
 
   let newLeaveUserId = $state('')
   let newLeaveDate = $state('')
@@ -183,13 +195,26 @@
   async function addHoliday() {
     if (!newHolidayDate || !newHolidayName) return
     try {
-      await upsertHoliday(newHolidayDate, newHolidayName)
+      await upsertHoliday(newHolidayDate, newHolidayName, newHolidayRecurring)
       holidays = await listHolidays()
       newHolidayDate = ''
       newHolidayName = ''
+      newHolidayRecurring = false
       message = 'Holiday added.'
     } catch (e) {
       message = e instanceof Error ? e.message : 'Failed to add holiday'
+    }
+  }
+
+  async function populatePhHolidays() {
+    try {
+      for (const h of phHolidays) {
+        await upsertHoliday(h.date, h.name, true)
+      }
+      holidays = await listHolidays()
+      message = 'PH holidays populated (recurring).'
+    } catch (e) {
+      message = e instanceof Error ? e.message : 'Failed to populate holidays'
     }
   }
 
@@ -308,20 +333,25 @@
       <div class="add-form">
         <input type="date" bind:value={newHolidayDate} placeholder="Date" />
         <input type="text" bind:value={newHolidayName} placeholder="Holiday name" />
+        <label class="chk-label"><input type="checkbox" bind:checked={newHolidayRecurring} /> Recurring yearly</label>
         <button class="btn primary" onclick={addHoliday} disabled={!newHolidayDate || !newHolidayName}>Add</button>
+      </div>
+      <div class="add-form">
+        <button class="btn secondary" onclick={populatePhHolidays}>🇵🇭 Pre-populate PH Holidays</button>
       </div>
       {#if holidays.length === 0}
         <div class="empty">No holidays set.</div>
       {:else}
         <table class="list">
           <thead>
-            <tr><th>Date</th><th>Name</th><th></th></tr>
+            <tr><th>Date</th><th>Name</th><th>Type</th><th></th></tr>
           </thead>
           <tbody>
             {#each holidays as h (h.date)}
               <tr>
                 <td>{h.date}</td>
                 <td>{h.name}</td>
+                <td>{#if h.recurring}<span class="recurring-badge">Recurring</span>{:else}One-time{/if}</td>
                 <td><button class="btn small danger" onclick={() => deleteHoliday(h.date)}>Remove</button></td>
               </tr>
             {/each}
@@ -695,5 +725,9 @@
   .ot-info-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
   .ot-info-table th { background: #f8f9fa; padding: 6px 10px; text-align: left; font-weight: 600; color: #555; border-bottom: 1px solid #eee; }
   .ot-info-table td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
+  .chk-label { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #555; cursor: pointer; }
+  .recurring-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; background: #e0e7ff; color: #4f46e5; }
+  .btn.secondary { padding: 8px 14px; border: 1px solid #ddd; border-radius: 6px; background: white; font-size: 13px; cursor: pointer; }
+  .btn.secondary:hover { border-color: #5865f2; color: #5865f2; }
 
 </style>

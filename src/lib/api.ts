@@ -30,11 +30,11 @@ export async function listHolidays(): Promise<HolidayRecord[]> {
   return res.json()
 }
 
-export async function upsertHoliday(date: string, name: string): Promise<void> {
+export async function upsertHoliday(date: string, name: string, recurring = false): Promise<void> {
   await fetch(`${BASE}/holidays`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ date, name }),
+    body: JSON.stringify({ date, name, recurring }),
   })
 }
 
