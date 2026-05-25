@@ -30,6 +30,10 @@
     return dateStr === today
   }
 
+  function dowClass(dateStr: string): string {
+    return 'dow-' + new Date(dateStr + 'T00:00:00').getDay()
+  }
+
   function startEdit(id: string, current: string) {
     editing = id
     editValue = current
@@ -153,7 +157,7 @@
           <tr>
             <th class="name">Name <span class="hint">(dbl-click)</span></th>
             {#each dates as date}
-              <th class="date" class:weekend={isWeekend(date)} class:today-hl={isToday(date)}>
+              <th class="date {dowClass(date)}" class:weekend={isWeekend(date)} class:today-hl={isToday(date)}>
                 <span class="day">{dayLabel(date)}</span>
                 <span class="date-num">{formatDate(date)}</span>
               </th>
@@ -192,7 +196,7 @@
               {#each user.days as day}
                 {@const badge = statusBadge(day)}
                 <td
-                  class="day-cell"
+                  class="day-cell {dowClass(day.date)}"
                   class:weekend={isWeekend(day.date)}
                   class:today-hl={isToday(day.date)}
                   class:future={day.status === 'future'}
@@ -254,9 +258,15 @@
   table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 500px; }
   thead { position: sticky; top: 0; z-index: 2; }
   th { background: var(--table-stripe); padding: 8px 6px; font-weight: 600; color: var(--text-secondary); text-align: center; border-bottom: 2px solid var(--border); white-space: nowrap; }
-  th.name { text-align: left; padding-left: 16px; min-width: 200px; position: sticky; left: 0; background: var(--table-stripe); z-index: 3; }
-  th.weekend { background: var(--bg-hover); }
-  th.today-hl { background: var(--today-bg); border-bottom-color: #5865f2; }
+  th.dow-0, td.day-cell.dow-0 { background: var(--dow-0); }
+  th.dow-1, td.day-cell.dow-1 { background: var(--dow-1); }
+  th.dow-2, td.day-cell.dow-2 { background: var(--dow-2); }
+  th.dow-3, td.day-cell.dow-3 { background: var(--dow-3); }
+  th.dow-4, td.day-cell.dow-4 { background: var(--dow-4); }
+  th.dow-5, td.day-cell.dow-5 { background: var(--dow-5); }
+  th.dow-6, td.day-cell.dow-6 { background: var(--dow-6); }
+  th.weekend, td.day-cell.weekend { background: var(--bg-hover) !important; }
+  th.today-hl { background: var(--today-bg) !important; border-bottom-color: #5865f2; }
   th.today-hl .date-num { color: #5865f2; font-weight: 800; }
   .hint { font-weight: 400; font-size: 10px; color: var(--text-muted); }
   .date .day { display: block; font-size: 10px; color: var(--text-secondary); }
@@ -272,8 +282,7 @@
   .position { display: block; font-size: 10px; color: var(--text-secondary); font-weight: 400; }
   .name-input { width: 100%; padding: 4px 6px; border: 2px solid #5865f2; border-radius: 4px; font-size: 13px; font-weight: 500; outline: none; background: var(--bg-input); }
   .day-cell { min-width: 100px; position: relative; }
-  .day-cell.weekend { background: var(--bg-hover); }
-  .day-cell.today-hl { background: var(--today-bg-cell); }
+  td.day-cell.today-hl { background: var(--today-bg-cell) !important; }
   .day-cell.future { color: var(--text-muted); }
   .time-display { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
   .time-display:hover { background: var(--bg-hover); }
