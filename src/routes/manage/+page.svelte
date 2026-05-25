@@ -323,8 +323,7 @@
             {#each filteredUsers as u}
               <tr>
                 <td>
-                  <span class="discord-id">{u.discordId}</span>
-                  <span class="discord-mention" title="Copy Discord mention (@user)" onclick={(e) => { navigator.clipboard.writeText(`<@${u.discordId}>`); const el = e.target as HTMLElement; el.textContent = 'Copied!'; setTimeout(() => el.textContent = 'Copy @mention', 1500); }}>Copy @mention</span>
+                  <span class="discord-id" title="Click to copy Discord mention (&lt;@ID&gt;)" onclick={(e) => { navigator.clipboard.writeText(`<@${u.discordId}>`); const el = e.target as HTMLElement; el.textContent = '@Copied!'; setTimeout(() => el.textContent = '@' + u.discordId, 1500); }}>@{u.discordId}</span>
                   {#if editingName[u.discordId]}
                     <input type="text" bind:value={nameEdit[u.discordId]} />
                   {:else}
@@ -413,8 +412,7 @@
   .inline-edit input { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; width: 140px; }
   .editable-name { cursor: pointer; border-bottom: 1px dashed #ccc; }
   .editable-name:hover { border-color: #5865f2; }
-  .discord-id { display: block; font-size: 10px; color: #aaa; }
-  .discord-mention { display: inline-block; font-size: 10px; color: #5865f2; cursor: pointer; margin-top: 2px; }
-  .discord-mention:hover { text-decoration: underline; }
+  .discord-id { display: block; font-size: 10px; color: #aaa; cursor: pointer; }
+  .discord-id:hover { color: #5865f2; }
 
 </style>
