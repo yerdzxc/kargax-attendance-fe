@@ -3,12 +3,13 @@
   import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition, setName, setUserType, batchSetActive, batchSetType } from '$lib/api'
   import type { HolidayRecord, LeaveRecord, ExportUser } from '$lib/types'
 
-  let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users'>('holidays')
+  let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users' | 'activity'>('holidays')
 
   let holidays: HolidayRecord[] = $state([])
   let leaves: LeaveRecord[] = $state([])
   let users: ExportUser[] = $state([])
   let allUsers = $state<{ discordId: string; username: string; type: string; active: boolean; lastAccess: string | null; position: string | null }[]>([])
+  let activityLog = $state<{ id: number; action: string; targetId: string | null; detail: string | null; created_at: string }[]>([])
   let loading = $state(true)
   let message = $state('')
 
@@ -107,16 +108,18 @@
     message = ''
     try {
       const range = weekRange()
-      const [h, l, data, all] = await Promise.all([
+      const [h, l, data, all, log] = await Promise.all([
         listHolidays(),
         listLeaves(),
         fetchAttendance(range.from, range.to, 'employee'),
         listUsers(),
+        fetch('/api/activity-log').then((r) => r.json()),
       ])
       holidays = h
       leaves = l
       users = data.users
       allUsers = all
+      activityLog = log
       for (const u of users) {
         restDayEdit[u.discordId] = u.restDay || ''
       }
@@ -248,6 +251,7 @@
     <button class="tab" class:active={tab === 'leaves'} onclick={() => tab = 'leaves'}>Leaves</button>
     <button class="tab" class:active={tab === 'restdays'} onclick={() => tab = 'restdays'}>Rest Days</button>
     <button class="tab" class:active={tab === 'users'} onclick={() => tab = 'users'}>Users</button>
+    <button class="tab" class:active={tab === 'activity'} onclick={() => tab = 'activity'}>Activity</button>
   </div>
 
   {#if loading}
@@ -432,6 +436,29 @@
         </table>
       {/if}
     </div>
+  {:else if tab === 'activity'}
+    <div class="panel">
+      <h2>Activity Log</h2>
+      {#if activityLog.length === 0}
+        <div class="empty">No activity recorded yet.</div>
+      {:else}
+        <table class="list">
+          <thead>
+            <tr><th>Time</th><th>Action</th><th>Target</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            {#each activityLog as entry}
+              <tr>
+                <td class="log-time">{new Date(entry.created_at).toLocaleString()}</td>
+                <td><span class="log-action">{entry.action.replace(/_/g, ' ')}</span></td>
+                <td>{entry.targetId || '—'}</td>
+                <td class="log-detail">{entry.detail || '—'}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      {/if}
+    </div>
   {/if}
 </div>
 
@@ -494,5 +521,8 @@
   .editable-name:hover { border-color: #5865f2; }
   .discord-id { display: block; font-size: 10px; color: #aaa; cursor: pointer; }
   .discord-id:hover { color: #5865f2; }
+  .log-time { font-size: 11px; color: #888; white-space: nowrap; }
+  .log-action { text-transform: capitalize; }
+  .log-detail { font-size: 12px; color: #555; }
 
 </style>
