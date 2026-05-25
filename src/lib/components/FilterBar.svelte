@@ -42,9 +42,11 @@
 </script>
 
 <div class="preset-row">
+  <button class="preset-btn" onclick={() => onPreset('prev-week')} disabled={loading} title="Previous 7 days">← Prev</button>
   {#each presets as p}
     <button class="preset-btn" onclick={() => onPreset(p.key)} disabled={loading}>{p.label}</button>
   {/each}
+  <button class="preset-btn" onclick={() => onPreset('next-week')} disabled={loading} title="Next 7 days">Next →</button>
 </div>
 
 <div class="filter-bar">

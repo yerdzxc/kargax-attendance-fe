@@ -205,7 +205,19 @@
     const dayOfWeek = today.getDay()
     const fmt = (dt: Date) => dt.toISOString().split('T')[0]
 
-    if (preset === 'this-week') {
+    if (preset === 'prev-week') {
+      const prev = new Date(from)
+      prev.setDate(prev.getDate() - 7)
+      const next = new Date(to)
+      next.setDate(next.getDate() - 7)
+      from = fmt(prev); to = fmt(next)
+    } else if (preset === 'next-week') {
+      const prev = new Date(from)
+      prev.setDate(prev.getDate() + 7)
+      const next = new Date(to)
+      next.setDate(next.getDate() + 7)
+      from = fmt(prev); to = fmt(next)
+    } else if (preset === 'this-week') {
       const monday = new Date(today)
       monday.setDate(d - ((dayOfWeek + 6) % 7))
       const sunday = new Date(monday)
