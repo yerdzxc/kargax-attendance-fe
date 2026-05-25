@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
   import { page } from '$app/stores'
   import { goto } from '$app/navigation'
 
@@ -168,7 +167,11 @@
     URL.revokeObjectURL(url)
   }
 
-  onMount(loadMonth)
+  $effect(() => {
+    void discordId
+    monthOffset = 0
+    loadMonth()
+  })
 </script>
 
 <div class="report">
@@ -237,6 +240,16 @@
           {/each}
         </tbody>
       </table>
+
+      <div class="legend">
+        <span class="legend-item"><span class="dot present"></span> Present</span>
+        <span class="legend-item"><span class="dot late"></span> Late</span>
+        <span class="legend-item"><span class="dot absent"></span> Absent</span>
+        <span class="legend-item"><span class="dot restday"></span> Rest Day</span>
+        <span class="legend-item"><span class="dot holiday"></span> Holiday</span>
+        <span class="legend-item"><span class="dot leave"></span> On Leave</span>
+        <span class="legend-item"><span class="dot future"></span> Future</span>
+      </div>
     </div>
   {/if}
 </div>
@@ -290,4 +303,14 @@
   .badge-bdl { background: #e3f2fd; color: #1565c0; }
   .badge-ob { background: #f3e5f5; color: #7b1fa2; }
   .holiday-name { font-size: 11px; color: #db2777; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.present { background: #22c55e; }
+  .dot.late { background: #d97706; }
+  .dot.absent { background: #ef4444; }
+  .dot.restday { background: #4f46e5; }
+  .dot.holiday { background: #db2777; }
+  .dot.leave { background: #f59e0b; }
+  .dot.future { background: #ccc; }
 </style>
