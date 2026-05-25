@@ -3,6 +3,7 @@
   import type { UserAttendance, AttendanceEntry, ExportData } from '$lib/types';
   import { fetchAttendance, generateDates, getWeekRange } from '$lib/api';
   import SummaryCards from '$lib/components/SummaryCards.svelte';
+  import TrendsChart from '$lib/components/TrendsChart.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
   import AttendanceTable from '$lib/components/AttendanceTable.svelte';
 
@@ -360,6 +361,8 @@
       periodLeave={periodLeave}
       periodRest={periodRest}
     />
+
+    <TrendsChart {users} {dates} />
 
     <FilterBar
       {from} {to} {type} {search} {loading}

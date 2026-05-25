@@ -75,7 +75,7 @@ button { cursor: pointer; }
   .nav, .nav-toggle, .theme-toggle { display: none !important; }
   .header-actions, .filter-bar, .preset-row, .legend, .footer,
   .table-actions, .toggle-absent, .absent-list,
-  .section-label { display: none !important; }
+  .section-label, .chart-wrap { display: none !important; }
   .app { max-width: 100% !important; padding: 0 !important; }
   .cards { break-inside: avoid; }
   .card { border: 1px solid #ddd !important; box-shadow: none !important; }
