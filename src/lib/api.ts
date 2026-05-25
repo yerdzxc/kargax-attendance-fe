@@ -89,6 +89,14 @@ export async function setUserActive(discordId: string, active: boolean): Promise
   })
 }
 
+export async function setPosition(discordId: string, position: string | null): Promise<void> {
+  await fetch(`${BASE}/set-position`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordId, position }),
+  })
+}
+
 export async function correctTime(discordUserId: string, signatureDate: string, timeIn?: string, timeOut?: string, late?: boolean): Promise<void> {
   await fetch(`${BASE}/correct-time`, {
     method: 'POST',

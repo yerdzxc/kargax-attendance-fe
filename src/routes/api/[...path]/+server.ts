@@ -1,6 +1,16 @@
 import type { RequestHandler } from './$types';
+import { createHmac } from 'crypto';
 
 const BACKEND = process.env.API_BACKEND_URL || 'http://localhost:3001';
+const SECRET = process.env.SIGNING_SECRET || '';
+
+function sign(body: string): { 'x-signature': string; 'x-signature-timestamp': string } {
+  const timestamp = new Date().toISOString();
+  const sig = createHmac('sha256', SECRET)
+    .update(`${timestamp}:${body}`)
+    .digest('hex');
+  return { 'x-signature': sig, 'x-signature-timestamp': timestamp };
+}
 
 const FORWARD_HEADERS = [
   'content-type',
@@ -45,6 +55,12 @@ async function proxy(
   for (const key of FORWARD_HEADERS) {
     const val = headers.get(key);
     if (val) proxyHeaders[key] = val;
+  }
+
+  if (SECRET) {
+    const signed = sign(body || '');
+    proxyHeaders['x-signature'] = signed['x-signature'];
+    proxyHeaders['x-signature-timestamp'] = signed['x-signature-timestamp'];
   }
 
   const init: RequestInit = { method, headers: proxyHeaders };

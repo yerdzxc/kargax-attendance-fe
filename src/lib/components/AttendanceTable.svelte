@@ -168,6 +168,9 @@
                 {#if user.surname}
                   <span class="surname">{user.surname}</span>
                 {/if}
+                {#if user.position}
+                  <span class="position">{user.position}</span>
+                {/if}
                 {#if user.restDay}
                   <span class="restday-tag">RD: {user.restDay}</span>
                 {/if}
@@ -236,6 +239,7 @@
   .given { display: inline; font-weight: 500; color: #333; font-size: 13px; }
   .surname { font-size: 11px; color: #999; margin-left: 4px; }
   .restday-tag { display: inline-block; font-size: 9px; background: #f0f0f0; color: #888; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+  .position { display: block; font-size: 10px; color: #888; font-weight: 400; }
   .name-input { width: 100%; padding: 4px 6px; border: 2px solid #5865f2; border-radius: 4px; font-size: 13px; font-weight: 500; outline: none; background: white; }
   .time-cell { font-variant-numeric: tabular-nums; font-size: 12px; position: relative; cursor: pointer; }
   .time-cell:hover { background: #f8faff; }

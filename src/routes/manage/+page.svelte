@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive } from '$lib/api'
+  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition } from '$lib/api'
   import type { HolidayRecord, LeaveRecord, ExportUser } from '$lib/types'
 
   let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users'>('holidays')
@@ -8,7 +8,7 @@
   let holidays: HolidayRecord[] = $state([])
   let leaves: LeaveRecord[] = $state([])
   let users: ExportUser[] = $state([])
-  let allUsers = $state<{ discordId: string; username: string; type: string; active: boolean; lastAccess: string | null }[]>([])
+  let allUsers = $state<{ discordId: string; username: string; type: string; active: boolean; lastAccess: string | null; position: string | null }[]>([])
   let loading = $state(true)
   let message = $state('')
 
@@ -20,6 +20,7 @@
   let newLeaveType = $state('SL')
 
   let restDayEdit: Record<string, string> = $state({})
+  let positionEdit: Record<string, string> = $state({})
   let userSearch = $state('')
   let userTypeFilter = $state('all')
   let userActiveFilter = $state('all')
@@ -61,6 +62,9 @@
       allUsers = all
       for (const u of users) {
         restDayEdit[u.discordId] = u.restDay || ''
+      }
+      for (const u of all) {
+        positionEdit[u.discordId] = u.position || ''
       }
     } catch (e) {
       message = e instanceof Error ? e.message : 'Failed to load data'
@@ -124,6 +128,16 @@
       message = val ? 'Rest day updated.' : 'Rest day cleared.'
     } catch (e) {
       message = e instanceof Error ? e.message : 'Failed to set rest day'
+    }
+  }
+
+  async function savePosition(discordId: string) {
+    const val = positionEdit[discordId] || ''
+    try {
+      await setPosition(discordId, val || null)
+      message = val ? 'Position updated.' : 'Position cleared.'
+    } catch (e) {
+      message = e instanceof Error ? e.message : 'Failed to set position'
     }
   }
 
@@ -283,13 +297,19 @@
       {:else}
         <table class="list">
           <thead>
-            <tr><th>User</th><th>Type</th><th>Status</th><th>Last Access</th><th></th></tr>
+            <tr><th>User</th><th>Type</th><th>Position</th><th>Status</th><th>Last Access</th><th></th></tr>
           </thead>
           <tbody>
             {#each filteredUsers as u}
               <tr>
                 <td>{u.username || u.discordId}</td>
                 <td style="text-transform:capitalize">{u.type}</td>
+                <td>
+                  <div class="inline-edit">
+                    <input type="text" bind:value={positionEdit[u.discordId]} placeholder="—" />
+                    <button class="btn small primary" onclick={() => savePosition(u.discordId)}>Save</button>
+                  </div>
+                </td>
                 <td>
                   <span class="badge" class:badge-active={u.active} class:badge-inactive={!u.active}>
                     {u.active ? 'Active' : 'Inactive'}
@@ -355,4 +375,7 @@
   .user-filters input { flex: 1; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
   .user-filters select { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
   .user-count { font-size: 12px; color: #888; white-space: nowrap; }
+  .inline-edit { display: flex; gap: 4px; align-items: center; }
+  .inline-edit input { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; width: 140px; }
+
 </style>

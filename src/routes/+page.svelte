@@ -21,6 +21,11 @@
   let showAbsent = $state(false);
   let viewMode = $state<'weekly' | 'monthly'>('weekly');
   let statusFilter = $state('all');
+  let positionFilter = $state('all');
+
+  let uniquePositions: string[] = $derived(
+    [...new Set(users.map((u) => u.position).filter(Boolean))]
+  );
 
   function buildDateMeta(dateList: string[]) {
     const meta = new Map<string, { dayOfWeek: string; dayLabel: string; display: string }>()
@@ -133,7 +138,7 @@
         }
       })
 
-      return { discordId: u.discordId, username: u.username, surname, givenName, restDay: u.restDay, days, totalPresent, totalAbsent }
+      return { discordId: u.discordId, username: u.username, surname, givenName, restDay: u.restDay, position: u.position, days, totalPresent, totalAbsent }
     })
   }
 
@@ -147,7 +152,7 @@
       dateMeta = meta;
       dates = dateList;
       users = processExportData(raw, dateList, meta);
-      filteredUsers = filterUsers(users, search);
+      filteredUsers = filterUsers(users, search, positionFilter);
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load data';
       users = []; filteredUsers = []; dates = [];
@@ -170,13 +175,20 @@
     from = first.toISOString().split('T')[0]; to = last.toISOString().split('T')[0]; load()
   }
 
-  function filterUsers(userList: UserAttendance[], query: string): UserAttendance[] {
-    if (!query) return userList
-    const q = query.toLowerCase()
-    return userList.filter((u) => u.username.toLowerCase().includes(q) || u.givenName.toLowerCase().includes(q) || u.surname.toLowerCase().includes(q))
+  function filterUsers(userList: UserAttendance[], query: string, position: string): UserAttendance[] {
+    let list = userList
+    if (query) {
+      const q = query.toLowerCase()
+      list = list.filter((u) => u.username.toLowerCase().includes(q) || u.givenName.toLowerCase().includes(q) || u.surname.toLowerCase().includes(q))
+    }
+    if (position && position !== 'all') {
+      list = list.filter((u) => u.position === position)
+    }
+    return list
   }
 
-  function handleSearch(v: string) { search = v; filteredUsers = filterUsers(users, v) }
+  function handleSearch(v: string) { search = v; filteredUsers = filterUsers(users, v, positionFilter) }
+  function handlePositionFilter(v: string) { positionFilter = v; filteredUsers = filterUsers(users, search, v) }
 
   function handleTypeChange(v: string) { type = v; load() }
 
@@ -314,6 +326,12 @@
             <option value="leave">On Leave</option>
             <option value="restday">Rest Day</option>
             <option value="holiday">Holiday</option>
+          </select>
+          <select class="status-filter" bind:value={positionFilter} onchange={(e) => handlePositionFilter((e.target as HTMLSelectElement).value)}>
+            <option value="all">All Roles</option>
+            {#each uniquePositions as pos}
+              <option value={pos}>{pos}</option>
+            {/each}
           </select>
           <button class="toggle-absent" onclick={() => showAbsent = !showAbsent}>
             {showAbsent ? 'Show All' : 'Absent List'} ({absentUsers.length})

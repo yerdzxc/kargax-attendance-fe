@@ -11,6 +11,7 @@ export interface ExportUser {
   discordId: string
   username: string
   restDay: string | null
+  position: string | null
 }
 
 export interface LeaveRecord {
@@ -53,6 +54,7 @@ export interface UserAttendance {
   surname: string
   givenName: string
   restDay: string | null
+  position: string | null
   days: AttendanceEntry[]
   totalPresent: number
   totalAbsent: number
