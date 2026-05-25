@@ -377,7 +377,7 @@
         <span class="legend-item"><span class="late-icon">⚠</span> Late (manually set by HR)</span>
       </div>
       <div class="legend-notes">
-        <strong>OT:</strong> day shift (>6PM) / night shift (>6AM if clock-in ≥2PM)<br>
+        <strong>OT indicator (+):</strong> day shift (>6PM) / night shift (>6AM if clock-in ≥2PM) — <em>visual hint only, not official OT</em><br>
         <strong>Day-spanning:</strong> night shifts covering the next day won't show as absent
       </div>
     </details>

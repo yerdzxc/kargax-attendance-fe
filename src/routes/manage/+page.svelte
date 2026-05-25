@@ -529,7 +529,7 @@
             <thead><tr><th>Option</th><th>Description</th><th>Limits</th></tr></thead>
             <tbody>
               <tr><td><code>date</code></td><td>Date of overtime (YYYY-MM-DD)</td><td>—</td></tr>
-              <tr><td><code>hours</code></td><td>Number of OT hours</td><td><strong>Post-shift:</strong> max 5h<br><strong>Pre-shift:</strong> max 3h<br><strong>Rest Day:</strong> max 8h<br><strong>Holiday:</strong> no limit</td></tr>
+              <tr><td><code>hours</code></td><td>Number of OT hours</td><td><strong>Post-shift:</strong> max 5h<br><strong>Pre-shift:</strong> max 3h<br><strong>Rest Day:</strong> max 8h<br><strong>Holiday:</strong> max 8h</td></tr>
               <tr><td><code>type</code></td><td><code>post</code> / <code>pre</code> / <code>rd</code> / <code>holiday</code></td><td>Post: after shift<br>Pre: before shift<br>RD: rest day OT<br>Holiday: holiday OT</td></tr>
               <tr><td><code>reason</code></td><td>Optional note</td><td>—</td></tr>
             </tbody>

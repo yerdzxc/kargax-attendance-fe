@@ -27,6 +27,7 @@
   let records: Map<string, UserRecord> = $state(new Map())
   let leaves: Map<string, string> = $state(new Map())
   let holidays: Map<string, string> = $state(new Map())
+  let ots: Map<string, { type: string; status: string }[]> = $state(new Map())
   let dates: string[] = $state([])
   let loading = $state(true)
   let error = $state('')
@@ -90,6 +91,12 @@
     return '—'
   }
 
+  function otBadge(dateStr: string): string {
+    const entries = ots.get(dateStr)
+    if (!entries) return ''
+    return entries.map((e) => e.type === 'rd' ? 'RD-OT' : e.type === 'holiday' ? 'H-OT' : e.type === 'pre' ? 'Pre-OT' : 'Post-OT').join(', ')
+  }
+
   function coveredRecords(dateStr: string): UserRecord | undefined {
     let rec = records.get(dateStr)
     if (rec) return rec
@@ -121,17 +128,25 @@
         d.setDate(d.getDate() + 1)
       }
 
-      const [res, usersRes] = await Promise.all([
+      const [res, usersRes, otRes] = await Promise.all([
         fetch(`/api/export/user/${discordId}?from=${from}&to=${to}`),
         fetch('/api/users'),
+        fetch(`/api/overtime/requests?from=${from}&to=${to}`),
       ])
       if (!res.ok) throw new Error('Failed to load')
       const data = await res.json()
+      const otData = await otRes.json()
       user = data.user
       records = new Map(data.records.map((r: UserRecord) => [r.signatureDate, r]))
       leaves = new Map(data.leaves.map((l: LeaveEntry) => [l.date, l.type]))
       holidays = new Map(data.holidays.map((h: HolidayEntry) => [h.date, h.name]))
       allUsers = await usersRes.json()
+      const otMap = new Map<string, { type: string; status: string }[]>()
+      for (const o of otData.filter((r: any) => r.discordUserId === discordId)) {
+        if (!otMap.has(o.date)) otMap.set(o.date, [])
+        otMap.get(o.date)!.push({ type: o.type, status: o.status })
+      }
+      ots = otMap
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load'
     } finally {
@@ -215,6 +230,7 @@
             <th>Time In</th>
             <th>Time Out</th>
             <th>Status</th>
+            <th>OT</th>
           </tr>
         </thead>
         <tbody>
@@ -238,6 +254,11 @@
                 {/if}
               </td>
               <td class={`status-cell ${statusClass(date)}`}>{statusLabel(date)}</td>
+              <td class="ot-cell">
+                {#if otBadge(date)}
+                  <span class="ot-request-badge">{otBadge(date)}</span>
+                {/if}
+              </td>
             </tr>
           {/each}
         </tbody>
@@ -251,9 +272,10 @@
         <span class="legend-item"><span class="dot holiday"></span> Holiday</span>
         <span class="legend-item"><span class="dot leave"></span> On Leave</span>
         <span class="legend-item"><span class="dot future"></span> Future</span>
+        <span class="legend-item"><span class="dot ot-request"></span> OT Filed (RD-OT / H-OT / Pre-OT / Post-OT)</span>
       </div>
       <div class="legend-notes">
-        <strong>OT:</strong> day shift (>6PM) / night shift (>6AM if clock-in ≥2PM)<br>
+        <strong>OT indicator (+):</strong> day shift (>6PM) / night shift (>6AM if clock-in ≥2PM) — <em>visual hint only, not official OT</em><br>
         <strong>Day-spanning:</strong> night shifts covering the next day won't show as absent
       </div>
     </div>
@@ -319,5 +341,8 @@
   .dot.holiday { background: #db2777; }
   .dot.leave { background: #f59e0b; }
   .dot.future { background: #ccc; }
+  .dot.ot-request { background: #8b5cf6; }
+  .ot-cell { text-align: center; }
+  .ot-request-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; background: #f3e8ff; color: #7c3aed; white-space: nowrap; }
   .legend-notes { margin-top: 10px; font-size: 11px; color: #888; line-height: 1.6; padding-top: 8px; border-top: 1px solid #eee; }
 </style>
