@@ -323,10 +323,11 @@
             {#each filteredUsers as u}
               <tr>
                 <td>
+                  <span class="discord-id">{u.discordId}</span>
                   {#if editingName[u.discordId]}
                     <input type="text" bind:value={nameEdit[u.discordId]} />
                   {:else}
-                    <span class="editable-name" ondblclick={() => startNameEdit(u.discordId)}>{u.username || u.discordId}</span>
+                    <span class="editable-name" title="{u.username || u.discordId}" ondblclick={() => startNameEdit(u.discordId)}>{u.username || u.discordId}</span>
                   {/if}
                 </td>
                 <td>
@@ -411,5 +412,6 @@
   .inline-edit input { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; width: 140px; }
   .editable-name { cursor: pointer; border-bottom: 1px dashed #ccc; }
   .editable-name:hover { border-color: #5865f2; }
+  .discord-id { display: block; font-size: 10px; color: #aaa; }
 
 </style>
