@@ -6,6 +6,8 @@
     totalLeave = 0,
     totalRest = 0,
     totalHoliday = 0,
+    totalLate = 0,
+    totalOT = 0,
   }: {
     totalUsers: number
     totalPresent: number
@@ -13,6 +15,8 @@
     totalLeave?: number
     totalRest?: number
     totalHoliday?: number
+    totalLate?: number
+    totalOT?: number
   } = $props()
 </script>
 
@@ -24,6 +28,14 @@
   <div class="card absent">
     <span class="count">{totalAbsent}</span>
     <span class="label">Absent Today</span>
+  </div>
+  <div class="card late">
+    <span class="count">{totalLate}</span>
+    <span class="label">Late Today</span>
+  </div>
+  <div class="card ot">
+    <span class="count">{totalOT}</span>
+    <span class="label">Overtime Today</span>
   </div>
   <div class="card leave">
     <span class="count">{totalLeave}</span>
@@ -50,6 +62,8 @@
   .label { display: block; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 4px; }
   .card.present .count { color: #22c55e; }
   .card.absent .count { color: #ef4444; }
+  .card.late .count { color: #d97706; }
+  .card.ot .count { color: #2563eb; }
   .card.leave .count { color: #f59e0b; }
   .card.rest .count { color: #4f46e5; }
   .card.holiday .count { color: #db2777; }

@@ -84,6 +84,15 @@
   async function saveTimeEdit() {
     if (!timeEdit) return
     const { userId, date, timeIn, timeOut, late } = timeEdit
+
+    if (timeIn.trim() && timeOut.trim()) {
+      const [ih, im] = timeIn.split(':').map(Number)
+      const [oh, om] = timeOut.split(':').map(Number)
+      if (oh < ih || (oh === ih && om <= im)) {
+        if (!confirm(`Time out (${timeOut}) is before or same as time in (${timeIn}). Save anyway?`)) return
+      }
+    }
+
     try {
       const body: any = { discordUserId: userId, signatureDate: date, late }
       if (timeIn.trim()) body.timeIn = timeIn.trim()

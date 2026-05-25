@@ -43,6 +43,7 @@
       list.push(day)
     }
     restDayEdit[discordId] = list.join(',')
+    setRestDay(discordId, list.join(',') || null).catch(() => {})
   }
 
   function toggleSelect(discordId: string) {
@@ -331,7 +332,7 @@
       {:else}
         <table class="list">
           <thead>
-            <tr><th>User</th><th>Rest Day</th><th></th></tr>
+            <tr><th>User</th><th>Rest Day</th></tr>
           </thead>
           <tbody>
             {#each users as u}
@@ -349,7 +350,6 @@
                     {/each}
                   </div>
                 </td>
-                <td><button class="btn small primary" onclick={() => saveRestDay(u.discordId)}>Save</button></td>
               </tr>
             {/each}
           </tbody>

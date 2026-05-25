@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { page } from '$app/stores'
+  import { goto } from '$app/navigation'
 
   interface UserRecord {
     timeIn: string | null
@@ -21,6 +22,7 @@
   }
 
   let discordId = $derived($page.params.discordId)
+  let allUsers = $state<{ discordId: string; username: string }[]>([])
   let user: { discordId: string; username: string; restDay: string | null; position: string | null } | null = $state(null)
   let records: Map<string, UserRecord> = $state(new Map())
   let leaves: Map<string, string> = $state(new Map())
@@ -103,18 +105,51 @@
         d.setDate(d.getDate() + 1)
       }
 
-      const res = await fetch(`/api/export/user/${discordId}?from=${from}&to=${to}`)
+      const [res, usersRes] = await Promise.all([
+        fetch(`/api/export/user/${discordId}?from=${from}&to=${to}`),
+        fetch('/api/users'),
+      ])
       if (!res.ok) throw new Error('Failed to load')
       const data = await res.json()
       user = data.user
       records = new Map(data.records.map((r: UserRecord) => [r.signatureDate, r]))
       leaves = new Map(data.leaves.map((l: LeaveEntry) => [l.date, l.type]))
       holidays = new Map(data.holidays.map((h: HolidayEntry) => [h.date, h.name]))
+      allUsers = await usersRes.json()
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load'
     } finally {
       loading = false
     }
+  }
+
+  function switchUser(e: Event) {
+    const id = (e.target as HTMLSelectElement).value
+    if (id && id !== discordId) goto(`/user/${id}`)
+  }
+
+  function downloadCSV() {
+    const rows: string[][] = [['Date', 'Day', 'Time In', 'Time Out', 'Status']]
+    for (const date of dates) {
+      const rec = records.get(date)
+      const day = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })
+      const status = statusLabel(date)
+      rows.push([
+        date,
+        day,
+        rec ? formatTime(rec.timeIn) : '',
+        rec ? formatTime(rec.timeOut) || '--' : '',
+        holidays.has(date) ? `Holiday: ${holidays.get(date)}` : leaves.has(date) ? `Leave: ${leaves.get(date)}` : status,
+      ])
+    }
+    const csv = '\uFEFF' + rows.map((r) => r.join(',')).join('\r\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${user?.username || discordId} ${dates[0]} to ${dates[dates.length - 1]}.csv`
+    document.body.appendChild(a); a.click(); a.remove()
+    URL.revokeObjectURL(url)
   }
 
   onMount(loadMonth)
@@ -124,7 +159,13 @@
   <header class="header">
     <div>
       <a href="/" class="back-link">← Dashboard</a>
-      <h1>{user?.username || 'User Report'}</h1>
+      <div class="user-switch">
+        <select onchange={switchUser} value={discordId}>
+          {#each allUsers as u}
+            <option value={u.discordId}>{u.username || u.discordId}</option>
+          {/each}
+        </select>
+      </div>
       {#if user?.position}
         <span class="position-tag">{user.position}</span>
       {/if}
@@ -136,6 +177,7 @@
       </span>
       <button class="nav-btn" onclick={() => navigateMonth(1)} disabled={monthOffset >= 0}>Next →</button>
     </div>
+    <button class="btn-download" onclick={downloadCSV} title="Download CSV">⬇ CSV</button>
   </header>
 
   {#if loading}
@@ -194,12 +236,16 @@
   .header h1 { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 4px 0 0; }
   .back-link { font-size: 13px; color: #5865f2; text-decoration: none; }
   .back-link:hover { text-decoration: underline; }
+  .user-switch { margin: 6px 0; }
+  .user-switch select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: 600; min-width: 200px; }
   .position-tag { display: inline-block; font-size: 11px; background: #e0e7ff; color: #4f46e5; padding: 2px 8px; border-radius: 4px; margin-top: 4px; }
   .month-nav { display: flex; align-items: center; gap: 10px; }
   .nav-btn { padding: 4px 12px; border: 1px solid #ddd; border-radius: 6px; background: white; font-size: 12px; cursor: pointer; }
   .nav-btn:hover:not(:disabled) { border-color: #5865f2; color: #5865f2; }
   .nav-btn:disabled { opacity: 0.4; cursor: default; }
   .month-label { font-size: 14px; font-weight: 600; color: #333; min-width: 140px; text-align: center; }
+  .btn-download { padding: 6px 14px; border: 1px solid #22c55e; border-radius: 6px; background: white; font-size: 12px; color: #22c55e; cursor: pointer; }
+  .btn-download:hover { background: #22c55e; color: white; }
   .loading, .error { padding: 48px; text-align: center; color: #888; font-size: 14px; }
   .error { color: #dc2626; }
   .table-scroll { overflow-x: auto; background: white; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }

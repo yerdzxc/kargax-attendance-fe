@@ -279,6 +279,8 @@
   const todayLeave = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'leave').length : 0);
   const todayRest = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'restday').length : 0);
   const todayHoliday = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'holiday').length : 0);
+  const todayLate = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.status === 'late').length : 0);
+  const todayOT = $derived(todayIdx >= 0 ? users.filter((u) => u.days[todayIdx]?.overtime).length : 0);
 
   const absentUsers = $derived(
     displayedUsers
@@ -327,6 +329,8 @@
       totalLeave={todayLeave}
       totalRest={todayRest}
       totalHoliday={todayHoliday}
+      totalLate={todayLate}
+      totalOT={todayOT}
     />
 
     <FilterBar
