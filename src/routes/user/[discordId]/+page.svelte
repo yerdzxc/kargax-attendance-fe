@@ -299,37 +299,29 @@
 <style>
   .report { max-width: 700px; margin: 0 auto; padding: 24px 16px; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-  .header h1 { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 4px 0 0; }
+  .header h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); margin: 4px 0 0; }
   .back-link { font-size: 13px; color: #5865f2; text-decoration: none; }
   .back-link:hover { text-decoration: underline; }
   .user-switch { margin: 6px 0; }
-  .user-switch select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-weight: 600; min-width: 200px; }
+  .user-switch select { padding: 6px 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 14px; font-weight: 600; min-width: 200px; background: var(--bg-input); color: var(--text-primary); }
   .position-tag { display: inline-block; font-size: 11px; background: #e0e7ff; color: #4f46e5; padding: 2px 8px; border-radius: 4px; margin-top: 4px; }
   .month-nav { display: flex; align-items: center; gap: 10px; }
-  .nav-btn { padding: 4px 12px; border: 1px solid #ddd; border-radius: 6px; background: white; font-size: 12px; cursor: pointer; }
+  .nav-btn { padding: 4px 12px; border: 1px solid var(--border-input); border-radius: 6px; background: var(--bg-card); font-size: 12px; cursor: pointer; color: var(--text-primary); }
   .nav-btn:hover:not(:disabled) { border-color: #5865f2; color: #5865f2; }
   .nav-btn:disabled { opacity: 0.4; cursor: default; }
-  .month-label { font-size: 14px; font-weight: 600; color: #333; min-width: 140px; text-align: center; }
-  .btn-download { padding: 6px 14px; border: 1px solid #22c55e; border-radius: 6px; background: white; font-size: 12px; color: #22c55e; cursor: pointer; }
+  .month-label { font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 140px; text-align: center; }
+  .btn-download { padding: 6px 14px; border: 1px solid #22c55e; border-radius: 6px; background: var(--bg-card); font-size: 12px; color: #22c55e; cursor: pointer; }
   .btn-download:hover { background: #22c55e; color: white; }
-  .loading, .error { padding: 48px; text-align: center; color: #888; font-size: 14px; }
+  .loading, .error { padding: 48px; text-align: center; color: var(--text-secondary); font-size: 14px; }
   .error { color: #dc2626; }
-  .table-scroll { overflow-x: auto; background: white; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .table-scroll { overflow-x: auto; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border); box-shadow: var(--shadow); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { background: #f8f9fa; padding: 10px 8px; font-weight: 600; color: #555; text-align: left; border-bottom: 2px solid #eee; }
-  td { padding: 8px 8px; border-bottom: 1px solid #f0f0f0; }
-  .day-row:hover td { background: #f8f9fa; }
-  .day-row.present td { background: #f0fdf4; }
-  .day-row.late td { background: #fffbeb; }
-  .day-row.absent td { background: #fef2f2; }
-  .day-row.restday td { background: #eef2ff; }
-  .day-row.holiday td { background: #fdf2f8; }
-  .day-row.future td { color: #ccc; }
-  .day-row.leave td { background: #fafafa; }
-  .date-cell { font-weight: 500; color: #333; }
-  .day-cell { color: #888; font-size: 12px; }
-  .time-cell { font-variant-numeric: tabular-nums; }
-  .absent-marker { color: #ccc; }
+  th { background: var(--table-stripe); padding: 10px 8px; font-weight: 600; color: var(--text-secondary); text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 8px 8px; border-bottom: 1px solid var(--border); }
+  .day-row:hover td { background: var(--bg-hover); }
+  .date-cell { font-weight: 500; color: var(--text-primary); }
+  .day-cell { color: var(--text-secondary); font-size: 12px; }
+  .absent-marker { color: var(--text-muted); }
   .early-icon { color: #6366f1; font-size: 11px; margin-left: 2px; }
   .status-cell { display: flex; align-items: center; gap: 6px; }
   .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.3px; }
@@ -346,8 +338,8 @@
   .badge-bdl { background: #e3f2fd; color: #1565c0; }
   .badge-ob { background: #f3e5f5; color: #7b1fa2; }
   .holiday-name { font-size: 11px; color: #db2777; }
-  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; }
-  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 12px 16px; background: var(--bg-hover); border-radius: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-secondary); }
   .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .dot.present { background: #22c55e; }
   .dot.late { background: #d97706; }
@@ -359,5 +351,5 @@
   .dot.ot-request { background: #8b5cf6; }
   .ot-cell { text-align: center; }
   .ot-request-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; background: #f3e8ff; color: #7c3aed; white-space: nowrap; }
-  .legend-notes { margin-top: 10px; font-size: 11px; color: #888; line-height: 1.6; padding-top: 8px; border-top: 1px solid #eee; }
+  .legend-notes { margin-top: 10px; font-size: 11px; color: var(--text-secondary); line-height: 1.6; padding-top: 8px; border-top: 1px solid var(--border); }
 </style>

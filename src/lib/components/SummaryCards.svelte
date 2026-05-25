@@ -91,11 +91,11 @@
 </div>
 
 <style>
-  .section-label { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .section-label { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .card { background: white; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .card { background: var(--bg-card); border-radius: 10px; padding: 16px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow); }
   .count { display: block; font-size: 28px; font-weight: 800; line-height: 1.2; }
-  .label { display: block; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 4px; }
+  .label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 4px; }
   .card.present .count { color: #22c55e; }
   .card.absent .count { color: #ef4444; }
   .card.late .count { color: #d97706; }

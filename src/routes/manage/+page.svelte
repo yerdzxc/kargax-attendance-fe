@@ -632,23 +632,23 @@
 <style>
   .manage { max-width: 800px; margin: 0 auto; padding: 24px 16px; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-  .header h1 { font-size: 22px; font-weight: 700; color: #1a1a2e; }
-  .subtitle { font-size: 13px; color: #888; margin-top: 2px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+  .subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
   .back-link { font-size: 13px; color: #5865f2; text-decoration: none; }
   .back-link:hover { text-decoration: underline; }
   .toast { padding: 10px 14px; border-radius: 8px; background: #dcfce7; color: #16a34a; font-size: 13px; margin-bottom: 16px; }
   .toast.error { background: #fef2f2; color: #dc2626; }
-  .tabs { display: flex; gap: 0; margin-bottom: 20px; background: white; border-radius: 10px; overflow: hidden; border: 1px solid #eee; }
-  .tab { flex: 1; padding: 12px; background: white; border: none; font-size: 13px; font-weight: 600; color: #888; cursor: pointer; transition: all 0.15s; }
-  .tab:hover { background: #f8f9fa; }
+  .tabs { display: flex; gap: 0; margin-bottom: 20px; background: var(--bg-card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .tab { flex: 1; padding: 12px; background: var(--bg-card); border: none; font-size: 13px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+  .tab:hover { background: var(--bg-hover); }
   .tab.active { background: #5865f2; color: white; }
-  .panel { background: white; border-radius: 10px; padding: 20px; border: 1px solid #eee; }
-  .panel h2 { font-size: 16px; margin-bottom: 16px; color: #333; }
-  .loading { padding: 48px; text-align: center; color: #888; font-size: 14px; }
-  .empty { padding: 24px; text-align: center; color: #aaa; font-size: 13px; }
-  .hint { font-size: 12px; color: #888; margin-bottom: 16px; }
+  .panel { background: var(--bg-card); border-radius: 10px; padding: 20px; border: 1px solid var(--border); }
+  .panel h2 { font-size: 16px; margin-bottom: 16px; color: var(--text-primary); }
+  .loading { padding: 48px; text-align: center; color: var(--text-secondary); font-size: 14px; }
+  .empty { padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px; }
+  .hint { font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; }
   .add-form { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-  .add-form input, .add-form select { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+  .add-form input, .add-form select { padding: 8px 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 13px; background: var(--bg-input); color: var(--text-primary); }
   .btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn.primary { background: #5865f2; color: white; }
@@ -657,12 +657,12 @@
   .btn.danger:hover:not(:disabled) { background: #dc2626; }
   .btn.small { padding: 4px 10px; font-size: 11px; }
   .list { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .list th { text-align: left; padding: 8px 10px; font-weight: 600; color: #555; border-bottom: 2px solid #eee; }
-  .list td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; }
-  .list td input, .list td select { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+  .list th { text-align: left; padding: 8px 10px; font-weight: 600; color: var(--text-secondary); border-bottom: 2px solid var(--border); }
+  .list td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .list td input, .list td select { padding: 4px 6px; border: 1px solid var(--border-input); border-radius: 4px; font-size: 12px; background: var(--bg-input); color: var(--text-primary); }
   .list td select { min-width: 90px; }
   .list td input { width: 100px; }
-  .list tr:hover td { background: #f8f9fa; }
+  .list tr:hover td { background: var(--bg-hover); }
   .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
   .badge-active { background: #dcfce7; color: #16a34a; }
   .badge-inactive { background: #fef2f2; color: #dc2626; }
@@ -672,62 +672,62 @@
   .badge-bdl { background: #e3f2fd; color: #1565c0; }
   .badge-ob { background: #f3e5f5; color: #7b1fa2; }
   .user-filters { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
-  .user-filters input { flex: 1; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
-  .user-filters select { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
-  .user-count { font-size: 12px; color: #888; white-space: nowrap; }
-  .bulk-bar { display: flex; gap: 8px; align-items: center; padding: 10px 12px; background: #f0f4ff; border-radius: 8px; margin-bottom: 12px; }
+  .user-filters input { flex: 1; padding: 8px 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 13px; background: var(--bg-input); color: var(--text-primary); }
+  .user-filters select { padding: 8px 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 13px; background: var(--bg-input); color: var(--text-primary); }
+  .user-count { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+  .bulk-bar { display: flex; gap: 8px; align-items: center; padding: 10px 12px; background: var(--bg-hover); border-radius: 8px; margin-bottom: 12px; }
   .bulk-count { font-size: 12px; font-weight: 600; color: #5865f2; }
-  .bulk-type-select { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+  .bulk-type-select { padding: 4px 6px; border: 1px solid var(--border-input); border-radius: 4px; font-size: 12px; background: var(--bg-input); color: var(--text-primary); }
   .chk { width: 32px; text-align: center; }
   .restday-pills { display: flex; gap: 4px; flex-wrap: wrap; }
-  .restday-pill { padding: 3px 10px; border: 1px solid #ddd; border-radius: 12px; background: white; font-size: 11px; color: #888; cursor: pointer; transition: all 0.15s; }
+  .restday-pill { padding: 3px 10px; border: 1px solid var(--border-input); border-radius: 12px; background: var(--bg-card); font-size: 11px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
   .restday-pill:hover { border-color: #5865f2; color: #5865f2; }
   .restday-pill.active { background: #5865f2; border-color: #5865f2; color: white; }
   .inline-edit { display: flex; gap: 4px; align-items: center; }
-  .inline-edit input { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; width: 140px; }
-  .editable-name { cursor: pointer; border-bottom: 1px dashed #ccc; }
+  .inline-edit input { padding: 4px 6px; border: 1px solid var(--border-input); border-radius: 4px; font-size: 12px; width: 140px; background: var(--bg-input); color: var(--text-primary); }
+  .editable-name { cursor: pointer; border-bottom: 1px dashed var(--text-muted); }
   .editable-name:hover { border-color: #5865f2; }
-  .discord-id { display: block; font-size: 10px; color: #aaa; cursor: pointer; }
+  .discord-id { display: block; font-size: 10px; color: var(--text-muted); cursor: pointer; }
   .discord-id:hover { color: #5865f2; }
-  .log-time { font-size: 11px; color: #888; white-space: nowrap; }
+  .log-time { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
   .log-action { text-transform: capitalize; }
-  .log-detail { font-size: 12px; color: #555; }
+  .log-detail { font-size: 12px; color: var(--text-primary); }
   .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .section-header h2 { margin: 0; }
-  .status-filter { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+  .status-filter { padding: 6px 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 13px; background: var(--bg-input); color: var(--text-primary); }
   .ot-actions { margin-bottom: 12px; }
-  .btn-refresh { padding: 6px 14px; border: 1px solid #ddd; border-radius: 6px; background: white; font-size: 12px; cursor: pointer; }
+  .btn-refresh { padding: 6px 14px; border: 1px solid var(--border-input); border-radius: 6px; background: var(--bg-card); font-size: 12px; cursor: pointer; color: var(--text-primary); }
   .btn-refresh:hover { border-color: #5865f2; color: #5865f2; }
   .ot-actions-row { display: flex; gap: 4px; align-items: center; }
-  .ot-note-input { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; width: 100px; }
-  .btn-approve { padding: 4px 10px; border: 1px solid #22c55e; border-radius: 4px; background: white; color: #22c55e; font-size: 13px; cursor: pointer; }
+  .ot-note-input { padding: 4px 6px; border: 1px solid var(--border-input); border-radius: 4px; font-size: 11px; width: 100px; background: var(--bg-input); color: var(--text-primary); }
+  .btn-approve { padding: 4px 10px; border: 1px solid #22c55e; border-radius: 4px; background: var(--bg-card); color: #22c55e; font-size: 13px; cursor: pointer; }
   .btn-approve:hover { background: #22c55e; color: white; }
-  .btn-reject { padding: 4px 10px; border: 1px solid #ef4444; border-radius: 4px; background: white; color: #ef4444; font-size: 13px; cursor: pointer; }
+  .btn-reject { padding: 4px 10px; border: 1px solid #ef4444; border-radius: 4px; background: var(--bg-card); color: #ef4444; font-size: 13px; cursor: pointer; }
   .btn-reject:hover { background: #ef4444; color: white; }
   .ot-type { font-size: 12px; text-transform: capitalize; }
   .status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
   .status-pending { background: #fef3c7; color: #d97706; }
   .status-approved { background: #dcfce7; color: #16a34a; }
   .status-rejected { background: #fef2f2; color: #dc2626; }
-  .muted { color: #aaa; font-size: 12px; }
-  .ot-form { margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #f9fafb; }
+  .muted { color: var(--text-muted); font-size: 12px; }
+  .ot-form { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: var(--bg-card); }
   .ot-form summary { font-size: 13px; font-weight: 600; color: #4f46e5; cursor: pointer; }
   .ot-form-fields { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
-  .ot-field { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+  .ot-field { padding: 6px 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 13px; background: var(--bg-input); color: var(--text-primary); }
   .ot-field[type="number"] { width: 60px; }
   .ot-field[type="date"] { width: 140px; }
   .btn-ot-submit { padding: 6px 14px; border: none; border-radius: 6px; background: #4f46e5; color: white; font-size: 13px; cursor: pointer; }
   .btn-ot-submit:hover { background: #4338ca; }
-  .ot-info { margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #f0fdf4; }
+  .ot-info { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: var(--bg-card); }
   .ot-info summary { font-size: 13px; font-weight: 600; color: #16a34a; cursor: pointer; }
-  .ot-info-content { margin-top: 10px; font-size: 13px; color: #444; line-height: 1.6; }
-  .ot-cmd { background: #1a1a2e; color: #e2e8f0; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin: 8px 0; overflow-x: auto; }
+  .ot-info-content { margin-top: 10px; font-size: 13px; color: var(--text-primary); line-height: 1.6; }
+  .ot-cmd { background: var(--bg-page); color: var(--text-primary); padding: 10px 14px; border-radius: 6px; font-size: 13px; margin: 8px 0; overflow-x: auto; }
   .ot-info-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
-  .ot-info-table th { background: #f8f9fa; padding: 6px 10px; text-align: left; font-weight: 600; color: #555; border-bottom: 1px solid #eee; }
-  .ot-info-table td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
-  .chk-label { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #555; cursor: pointer; }
+  .ot-info-table th { background: var(--table-stripe); padding: 6px 10px; text-align: left; font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+  .ot-info-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .chk-label { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
   .recurring-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; background: #e0e7ff; color: #4f46e5; }
-  .btn.secondary { padding: 8px 14px; border: 1px solid #ddd; border-radius: 6px; background: white; font-size: 13px; cursor: pointer; }
+  .btn.secondary { padding: 8px 14px; border: 1px solid var(--border-input); border-radius: 6px; background: var(--bg-card); font-size: 13px; cursor: pointer; color: var(--text-primary); }
   .btn.secondary:hover { border-color: #5865f2; color: #5865f2; }
 
 </style>

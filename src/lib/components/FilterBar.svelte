@@ -103,10 +103,10 @@
     align-items: flex-end;
     margin-bottom: 20px;
     padding: 16px;
-    background: white;
+    background: var(--bg-card);
     border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    border: 1px solid #eee;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
   }
   .filter-group {
     display: flex;
@@ -120,24 +120,24 @@
   label {
     font-size: 11px;
     font-weight: 600;
-    color: #888;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
   input,
   select {
     padding: 8px 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-input);
     border-radius: 6px;
     font-size: 13px;
     outline: none;
-    background: #fafafa;
+    background: var(--bg-input);
     transition: border-color 0.15s;
   }
   input:focus,
   select:focus {
     border-color: #5865f2;
-    background: white;
+    background: var(--bg-input);
   }
   .actions {
     display: flex;
@@ -166,14 +166,14 @@
     background: #4752c4;
   }
   .btn.secondary {
-    background: #e8e8e8;
-    color: #333;
+    background: var(--bg-hover);
+    color: var(--text-primary);
   }
   .btn.secondary:hover:not(:disabled) {
-    background: #d4d4d4;
+    background: var(--border);
   }
   .preset-row { display: flex; gap: 6px; margin-bottom: 8px; }
-  .preset-btn { padding: 4px 12px; border: 1px solid #ddd; border-radius: 6px; background: white; font-size: 12px; color: #555; cursor: pointer; }
+  .preset-btn { padding: 4px 12px; border: 1px solid var(--border-input); border-radius: 6px; background: var(--bg-card); font-size: 12px; color: var(--text-secondary); cursor: pointer; }
   .preset-btn:hover:not(:disabled) { border-color: #5865f2; color: #5865f2; }
   .preset-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>

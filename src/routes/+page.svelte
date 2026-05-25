@@ -459,40 +459,40 @@
 
 <style>
   :global(*) { box-sizing: border-box; margin: 0; padding: 0; }
-  :global(body) { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
+  :global(body) { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-page); color: var(--text-primary); min-height: 100vh; }
   .app { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-  .header h1 { font-size: 22px; font-weight: 700; color: #1a1a2e; }
-  .subtitle { font-size: 13px; color: #888; margin-top: 2px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+  .subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
   .header-actions { display: flex; align-items: center; gap: 12px; }
-  .view-toggle { display: flex; gap: 0; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #ddd; }
-  .toggle-btn { padding: 6px 14px; border: none; background: white; font-size: 12px; font-weight: 600; color: #888; cursor: pointer; }
+  .view-toggle { display: flex; gap: 0; background: var(--bg-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-input); }
+  .toggle-btn { padding: 6px 14px; border: none; background: var(--bg-card); font-size: 12px; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
   .toggle-btn.active { background: #5865f2; color: white; }
-  .manage-link { padding: 6px 14px; background: white; border: 1px solid #ddd; border-radius: 8px; font-size: 12px; font-weight: 600; color: #5865f2; text-decoration: none; }
-  .manage-link:hover { background: #f0f4ff; }
+  .manage-link { padding: 6px 14px; background: var(--bg-card); border: 1px solid var(--border-input); border-radius: 8px; font-size: 12px; font-weight: 600; color: #5865f2; text-decoration: none; }
+  .manage-link:hover { background: var(--bg-hover); }
   .main { min-height: 60vh; }
   .error-banner { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; font-size: 13px; margin-bottom: 16px; }
   .error-banner button { padding: 6px 12px; background: #b91c1c; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; }
   .error-banner button:hover { background: #991b1b; }
   .table-section { margin-top: 20px; }
   .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .section-header h2 { font-size: 16px; color: #333; }
+  .section-header h2 { font-size: 16px; color: var(--text-primary); }
   .table-actions { display: flex; align-items: center; gap: 8px; }
-  .status-filter { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; background: white; }
-  .toggle-absent { padding: 6px 12px; background: white; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; font-weight: 600; color: #5865f2; cursor: pointer; }
-  .toggle-absent:hover { background: #f0f4ff; }
-  .absent-list { background: white; border: 1px solid #fee2e2; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .status-filter { padding: 6px 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 12px; background: var(--bg-card); }
+  .toggle-absent { padding: 6px 12px; background: var(--bg-card); border: 1px solid var(--border-input); border-radius: 6px; font-size: 12px; font-weight: 600; color: #5865f2; cursor: pointer; }
+  .toggle-absent:hover { background: var(--bg-hover); }
+  .absent-list { background: var(--bg-card); border: 1px solid #fee2e2; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
   .absent-list h3 { font-size: 14px; color: #b91c1c; margin-bottom: 12px; }
-  .empty { padding: 24px; text-align: center; color: #aaa; font-size: 13px; }
-  .absent-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+  .empty { padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px; }
+  .absent-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
   .absent-item:last-child { border-bottom: none; }
-  .absent-name { font-weight: 500; color: #333; }
-  .absent-dates { color: #888; font-size: 12px; }
-  .footer { text-align: center; padding: 32px 0 16px; font-size: 11px; color: #aaa; }
-  .legend { background: white; border: 1px solid #eee; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; cursor: pointer; }
-  .legend summary { font-weight: 600; color: #555; }
+  .absent-name { font-weight: 500; color: var(--text-primary); }
+  .absent-dates { color: var(--text-secondary); font-size: 12px; }
+  .footer { text-align: center; padding: 32px 0 16px; font-size: 11px; color: var(--text-muted); }
+  .legend { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; cursor: pointer; }
+  .legend summary { font-weight: 600; color: var(--text-secondary); }
   .legend-items { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; cursor: default; }
-  .legend-item { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #666; }
+  .legend-item { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary); }
   .legend-item .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
   .legend-item .badge-present { background: #dcfce7; color: #16a34a; }
   .legend-item .badge-late { background: #fef3c7; color: #d97706; }
@@ -506,5 +506,5 @@
   .legend-item .badge-ob { background: #f3e5f5; color: #7b1fa2; }
   .legend-item .ot-icon { color: #22c55e; font-weight: 700; font-size: 14px; }
   .legend-item .late-icon { color: #f59e0b; font-size: 14px; }
-  .legend-notes { margin-top: 10px; font-size: 11px; color: #888; line-height: 1.6; padding-top: 8px; border-top: 1px solid #eee; }
+  .legend-notes { margin-top: 10px; font-size: 11px; color: var(--text-secondary); line-height: 1.6; padding-top: 8px; border-top: 1px solid var(--border); }
 </style>
