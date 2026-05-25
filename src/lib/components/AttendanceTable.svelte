@@ -10,7 +10,7 @@
   let editing: string | null = $state(null)
   let editValue = $state('')
 
-  let timeEdit: { userId: string; date: string; field: 'in' | 'out'; value: string } | null = $state(null)
+  let timeEdit: { userId: string; date: string; field: 'in' | 'out'; value: string; late: boolean } | null = $state(null)
 
   function dayLabel(dateStr: string): string {
     return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })
@@ -67,18 +67,18 @@
     if (e.key === 'Escape') cancelEdit()
   }
 
-  function startTimeEdit(userId: string, date: string, field: 'in' | 'out', current: string) {
-    timeEdit = { userId, date, field, value: current }
+  function startTimeEdit(userId: string, date: string, field: 'in' | 'out', current: string, late: boolean) {
+    timeEdit = { userId, date, field, value: current, late }
   }
 
   async function saveTimeEdit() {
     if (!timeEdit) return
-    const { userId, date, field, value } = timeEdit
+    const { userId, date, field, value, late } = timeEdit
     const timeVal = value.trim()
     try {
-      const body: any = { discordUserId: userId, signatureDate: date }
-      if (field === 'in') body.timeIn = timeVal
-      else body.timeOut = timeVal
+      const body: any = { discordUserId: userId, signatureDate: date, late }
+      if (field === 'in') body.timeIn = timeVal || undefined
+      else body.timeOut = timeVal || undefined
       const res = await fetch('/api/correct-time', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -89,7 +89,7 @@
       if (user) {
         const day = user.days.find((d) => d.date === date)
         if (day) {
-          if (field === 'in') day.timeIn = timeVal
+          if (field === 'in') { day.timeIn = timeVal; day.status = late ? 'late' : 'present' }
           else day.timeOut = timeVal
         }
       }
@@ -176,9 +176,12 @@
             {#each user.days as day}
               {@const badge = statusBadge(day)}
               {#if day.present || day.status === 'late'}
-                <td class="time-cell in" ondblclick={() => startTimeEdit(user.discordId, day.date, 'in', day.timeIn)}>
+                <td class="time-cell in" ondblclick={() => startTimeEdit(user.discordId, day.date, 'in', day.timeIn, day.status === 'late')}>
                   {#if isTimeEditing(user.discordId, day.date, 'in')}
-                    <input type="text" class="time-input" bind:value={timeEdit!.value} onblur={saveTimeEdit} onkeydown={handleTimeKeydown} autofocus placeholder="HH:mm" />
+                    <div class="time-edit-popup">
+                      <input type="text" class="time-input" bind:value={timeEdit!.value} onblur={saveTimeEdit} onkeydown={handleTimeKeydown} autofocus placeholder="HH:mm" />
+                      <label class="late-label"><input type="checkbox" bind:checked={timeEdit!.late} /> Late</label>
+                    </div>
                   {:else}
                     {day.timeIn || '--'}
                     {#if day.status === 'late'}
@@ -186,9 +189,12 @@
                     {/if}
                   {/if}
                 </td>
-                <td class="time-cell out" ondblclick={() => startTimeEdit(user.discordId, day.date, 'out', day.timeOut)}>
+                <td class="time-cell out" ondblclick={() => startTimeEdit(user.discordId, day.date, 'out', day.timeOut, day.status === 'late')}>
                   {#if isTimeEditing(user.discordId, day.date, 'out')}
-                    <input type="text" class="time-input" bind:value={timeEdit!.value} onblur={saveTimeEdit} onkeydown={handleTimeKeydown} autofocus placeholder="HH:mm" />
+                    <div class="time-edit-popup">
+                      <input type="text" class="time-input" bind:value={timeEdit!.value} onblur={saveTimeEdit} onkeydown={handleTimeKeydown} autofocus placeholder="HH:mm" />
+                      <label class="late-label"><input type="checkbox" bind:checked={timeEdit!.late} /> Late</label>
+                    </div>
                   {:else}
                     {day.timeOut || '--'}
                     {#if day.overtime}
@@ -236,6 +242,9 @@
   .time-cell.in { color: #333; }
   .time-cell.out { color: #555; }
   .time-input { width: 52px; padding: 2px 4px; border: 2px solid #5865f2; border-radius: 4px; font-size: 12px; font-weight: 500; outline: none; background: white; text-align: center; font-variant-numeric: tabular-nums; }
+  .time-edit-popup { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .late-label { display: flex; align-items: center; gap: 3px; font-size: 10px; color: #d97706; cursor: pointer; user-select: none; }
+  .late-label input { margin: 0; }
   .late-icon { color: #f59e0b; font-size: 10px; margin-left: 2px; }
   .ot-icon { color: #22c55e; font-weight: 700; font-size: 12px; margin-left: 2px; }
   .badge-cell { padding: 4px 6px; }

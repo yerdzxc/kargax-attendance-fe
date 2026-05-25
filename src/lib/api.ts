@@ -89,11 +89,11 @@ export async function setUserActive(discordId: string, active: boolean): Promise
   })
 }
 
-export async function correctTime(discordUserId: string, signatureDate: string, timeIn?: string, timeOut?: string): Promise<void> {
+export async function correctTime(discordUserId: string, signatureDate: string, timeIn?: string, timeOut?: string, late?: boolean): Promise<void> {
   await fetch(`${BASE}/correct-time`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ discordUserId, signatureDate, timeIn, timeOut }),
+    body: JSON.stringify({ discordUserId, signatureDate, timeIn, timeOut, late }),
   })
 }
 

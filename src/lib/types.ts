@@ -4,6 +4,7 @@ export interface AttendanceRecord {
   timeIn: string | null
   timeOut: string | null
   signatureDate: string | null
+  late: boolean
 }
 
 export interface ExportUser {

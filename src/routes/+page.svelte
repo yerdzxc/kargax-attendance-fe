@@ -48,11 +48,6 @@
     return `${String(t.h).padStart(2, '0')}:${String(t.m).padStart(2, '0')}`
   }
 
-  function isLate(iso: string | null): boolean {
-    const t = parseTime(iso)
-    return t !== null && (t.h > 9 || (t.h === 9 && t.m > 0))
-  }
-
   function isOvertime(iso: string | null): boolean {
     const t = parseTime(iso)
     return t !== null && (t.h > 18 || (t.h === 18 && t.m > 0))
@@ -84,11 +79,11 @@
       holidayNames.set(h.date, h.name)
     }
 
-    const recordMap = new Map<string, Map<string, { timeIn: string | null; timeOut: string | null }>>()
+    const recordMap = new Map<string, Map<string, { timeIn: string | null; timeOut: string | null; late: boolean }>>()
     for (const r of data.records) {
       if (!r.signatureDate) continue
       if (!recordMap.has(r.discordUserId)) recordMap.set(r.discordUserId, new Map())
-      recordMap.get(r.discordUserId)!.set(r.signatureDate, { timeIn: r.timeIn, timeOut: r.timeOut })
+      recordMap.get(r.discordUserId)!.set(r.signatureDate, { timeIn: r.timeIn, timeOut: r.timeOut, late: r.late })
     }
 
     return data.users.map((u) => {
@@ -118,7 +113,7 @@
           status = 'restday'
         } else if (rec) {
           present = true
-          status = isLate(rec.timeIn) ? 'late' : 'present'
+          status = rec.late ? 'late' : 'present'
         }
 
         if (present) totalPresent++
@@ -303,7 +298,7 @@
         <span class="legend-item"><span class="badge badge-bdl">BDL</span> Birthday Leave</span>
         <span class="legend-item"><span class="badge badge-ob">OB</span> Official Business</span>
         <span class="legend-item"><span class="ot-icon">+</span> Overtime</span>
-        <span class="legend-item"><span class="late-icon">⚠</span> Late (after 9:00)</span>
+        <span class="legend-item"><span class="late-icon">⚠</span> Late (manually set by HR)</span>
       </div>
     </details>
 
