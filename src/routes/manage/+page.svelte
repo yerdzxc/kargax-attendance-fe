@@ -526,11 +526,13 @@
             <code>/ot date:2026-05-26 hours:2 type:post reason:Finishing report</code>
           </div>
           <table class="ot-info-table">
-            <tr><th>Option</th><th>Description</th><th>Limits</th></tr>
-            <tr><td><code>date</code></td><td>Date of overtime (YYYY-MM-DD)</td><td>—</td></tr>
-            <tr><td><code>hours</code></td><td>Number of OT hours</td><td><strong>Post-shift:</strong> max 5h<br><strong>Pre-shift:</strong> max 3h</td></tr>
-            <tr><td><code>type</code></td><td><code>post</code> (after shift) or <code>pre</code> (before shift)</td><td>Post: 6PM–11PM window<br>Pre: 6AM–9AM window</td></tr>
-            <tr><td><code>reason</code></td><td>Optional note</td><td>—</td></tr>
+            <thead><tr><th>Option</th><th>Description</th><th>Limits</th></tr></thead>
+            <tbody>
+              <tr><td><code>date</code></td><td>Date of overtime (YYYY-MM-DD)</td><td>—</td></tr>
+              <tr><td><code>hours</code></td><td>Number of OT hours</td><td><strong>Post-shift:</strong> max 5h<br><strong>Pre-shift:</strong> max 3h</td></tr>
+              <tr><td><code>type</code></td><td><code>post</code> (after shift) or <code>pre</code> (before shift)</td><td>Post: 6PM–11PM window<br>Pre: 6AM–9AM window</td></tr>
+              <tr><td><code>reason</code></td><td>Optional note</td><td>—</td></tr>
+            </tbody>
           </table>
           <p>Once filed, the request appears here as <span class="status-badge status-pending">pending</span> for HR to review.</p>
         </div>
