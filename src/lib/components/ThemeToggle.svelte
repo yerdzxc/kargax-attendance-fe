@@ -1,5 +1,15 @@
 <script lang="ts">
-  let theme = $state(localStorage.getItem('theme') || '')
+  import { onMount } from 'svelte'
+  import { browser } from '$app/environment'
+
+  let theme = $state('')
+
+  onMount(() => {
+    if (browser) {
+      theme = localStorage.getItem('theme') || ''
+      document.documentElement.className = theme
+    }
+  })
 
   function toggle() {
     theme = theme === 'dark' ? '' : 'dark'
