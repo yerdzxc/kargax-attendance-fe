@@ -260,6 +260,7 @@
   .badge-absent { background: #fef2f2; color: #dc2626; }
   .badge-late { background: #fef3c7; color: #d97706; }
   .badge-rest { background: #e0e7ff; color: #4f46e5; }
+  .badge-future { background: #f5f5f5; color: #bbb; }
   .badge-holiday { background: #fce7f3; color: #db2777; }
   .badge-sl { background: #fce4ec; color: #c62828; }
   .badge-vl { background: #e8f5e9; color: #2e7d32; }
