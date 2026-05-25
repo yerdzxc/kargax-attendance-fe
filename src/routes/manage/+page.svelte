@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition, setName, setUserType, batchSetActive, batchSetType, listOvertimeRequests, approveOvertime, rejectOvertime } from '$lib/api'
+  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition, setName, setUserType, batchSetActive, batchSetType, listOvertimeRequests, approveOvertime, rejectOvertime, createOvertimeRequest } from '$lib/api'
   import type { HolidayRecord, LeaveRecord, ExportUser, OvertimeRequest } from '$lib/types'
 
   let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users' | 'activity' | 'overtime'>('holidays')
@@ -13,6 +13,11 @@
   let overtimeRequests = $state<OvertimeRequest[]>([])
   let otNote = $state<Record<number, string>>({})
   let otStatusFilter = $state<string>('pending')
+  let otNewUser = $state('')
+  let otNewDate = $state(new Date().toISOString().split('T')[0])
+  let otNewHours = $state(1)
+  let otNewType = $state<'pre' | 'post'>('post')
+  let otNewNote = $state('')
   let loading = $state(true)
   let message = $state('')
 
@@ -126,6 +131,19 @@
     await rejectOvertime(id, otNote[id] || undefined)
     message = 'Overtime rejected.'
     loadOvertime()
+  }
+
+  async function handleCreateOt() {
+    if (!otNewUser || !otNewDate || !otNewHours) return
+    try {
+      await createOvertimeRequest(otNewUser, otNewDate, otNewHours, otNewType, otNewNote || undefined)
+      message = 'Overtime filed.'
+      otNewNote = ''
+      otNewHours = 1
+      loadOvertime()
+    } catch (e) {
+      message = e instanceof Error ? e.message : 'Failed to file OT'
+    }
   }
 
   async function load() {
@@ -499,6 +517,27 @@
           <option value="">All</option>
         </select>
       </div>
+
+      <details class="ot-form">
+        <summary>File Overtime for Employee</summary>
+        <div class="ot-form-fields">
+          <select class="ot-field" bind:value={otNewUser}>
+            <option value="">Select user…</option>
+            {#each allUsers as u}
+              <option value={u.discordId}>{u.username || u.discordId}</option>
+            {/each}
+          </select>
+          <input class="ot-field" type="date" bind:value={otNewDate} />
+          <input class="ot-field" type="number" min="0.5" max="8" step="0.5" bind:value={otNewHours} />
+          <select class="ot-field" bind:value={otNewType}>
+            <option value="post">Post-shift</option>
+            <option value="pre">Pre-shift</option>
+          </select>
+          <input class="ot-field" type="text" placeholder="Reason..." bind:value={otNewNote} />
+          <button class="btn-ot-submit" onclick={handleCreateOt}>File OT</button>
+        </div>
+      </details>
+
       <div class="ot-actions">
         <button class="btn-refresh" onclick={loadOvertime}>↻ Refresh</button>
       </div>
@@ -619,5 +658,13 @@
   .status-approved { background: #dcfce7; color: #16a34a; }
   .status-rejected { background: #fef2f2; color: #dc2626; }
   .muted { color: #aaa; font-size: 12px; }
+  .ot-form { margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #f9fafb; }
+  .ot-form summary { font-size: 13px; font-weight: 600; color: #4f46e5; cursor: pointer; }
+  .ot-form-fields { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+  .ot-field { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+  .ot-field[type="number"] { width: 60px; }
+  .ot-field[type="date"] { width: 140px; }
+  .btn-ot-submit { padding: 6px 14px; border: none; border-radius: 6px; background: #4f46e5; color: white; font-size: 13px; cursor: pointer; }
+  .btn-ot-submit:hover { background: #4338ca; }
 
 </style>
