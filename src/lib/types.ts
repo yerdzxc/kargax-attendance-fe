@@ -41,7 +41,7 @@ export interface AttendanceEntry {
   timeIn: string
   timeOut: string
   present: boolean
-  status: 'present' | 'late' | 'absent' | 'restday' | 'holiday' | 'leave'
+  status: 'present' | 'late' | 'absent' | 'restday' | 'holiday' | 'leave' | 'future'
   leaveType?: string
   holidayName?: string
   overtime: boolean

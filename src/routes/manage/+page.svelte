@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition, setName } from '$lib/api'
+  import { listHolidays, upsertHoliday, removeHoliday, listLeaves, upsertLeave, removeLeave, setRestDay, fetchAttendance, listUsers, setUserActive, setPosition, setName, setUserType } from '$lib/api'
   import type { HolidayRecord, LeaveRecord, ExportUser } from '$lib/types'
 
   let tab = $state<'holidays' | 'leaves' | 'restdays' | 'users'>('holidays')
@@ -22,6 +22,7 @@
   let restDayEdit: Record<string, string> = $state({})
   let positionEdit: Record<string, string> = $state({})
   let nameEdit: Record<string, string> = $state({})
+  let typeEdit: Record<string, string> = $state({})
   let editingName: Record<string, boolean> = $state({})
   let userSearch = $state('')
   let userTypeFilter = $state('all')
@@ -68,6 +69,7 @@
       for (const u of all) {
         positionEdit[u.discordId] = u.position || ''
         nameEdit[u.discordId] = u.username || ''
+        typeEdit[u.discordId] = u.type || 'employee'
       }
     } catch (e) {
       message = e instanceof Error ? e.message : 'Failed to load data'
@@ -134,31 +136,29 @@
     }
   }
 
-  async function savePosition(discordId: string) {
-    const val = positionEdit[discordId] || ''
+  async function saveUser(discordId: string) {
+    const name = nameEdit[discordId]?.trim()
+    const position = positionEdit[discordId] || null
+    const type = typeEdit[discordId]
+    if (!name) return
     try {
-      await setPosition(discordId, val || null)
-      message = val ? 'Position updated.' : 'Position cleared.'
+      await Promise.all([
+        setName(discordId, name),
+        setPosition(discordId, position),
+        setUserType(discordId, type),
+      ])
+      editingName[discordId] = false
+      allUsers = allUsers.map((u) =>
+        u.discordId === discordId ? { ...u, username: name, position, type } : u
+      )
+      message = 'User updated.'
     } catch (e) {
-      message = e instanceof Error ? e.message : 'Failed to set position'
+      message = e instanceof Error ? e.message : 'Failed to update user'
     }
   }
 
   function startNameEdit(discordId: string) {
     editingName[discordId] = true
-  }
-
-  async function saveName(discordId: string) {
-    const val = nameEdit[discordId]?.trim()
-    if (!val) return
-    try {
-      await setName(discordId, val)
-      editingName[discordId] = false
-      allUsers = allUsers.map((u) => u.discordId === discordId ? { ...u, username: val } : u)
-      message = 'Name updated.'
-    } catch (e) {
-      message = e instanceof Error ? e.message : 'Failed to update name'
-    }
   }
 
   const leaveTypes = [
@@ -324,21 +324,19 @@
               <tr>
                 <td>
                   {#if editingName[u.discordId]}
-                    <div class="inline-edit">
-                      <input type="text" bind:value={nameEdit[u.discordId]} />
-                      <button class="btn small primary" onclick={() => saveName(u.discordId)}>Save</button>
-                      <button class="btn small" onclick={() => { editingName[u.discordId] = false; nameEdit[u.discordId] = u.username }}>Cancel</button>
-                    </div>
+                    <input type="text" bind:value={nameEdit[u.discordId]} />
                   {:else}
                     <span class="editable-name" ondblclick={() => startNameEdit(u.discordId)}>{u.username || u.discordId}</span>
                   {/if}
                 </td>
-                <td style="text-transform:capitalize">{u.type}</td>
                 <td>
-                  <div class="inline-edit">
-                    <input type="text" bind:value={positionEdit[u.discordId]} placeholder="—" />
-                    <button class="btn small primary" onclick={() => savePosition(u.discordId)}>Save</button>
-                  </div>
+                  <select bind:value={typeEdit[u.discordId]}>
+                    <option value="employee">Employee</option>
+                    <option value="intern">Intern</option>
+                  </select>
+                </td>
+                <td>
+                  <input type="text" bind:value={positionEdit[u.discordId]} placeholder="—" />
                 </td>
                 <td>
                   <span class="badge" class:badge-active={u.active} class:badge-inactive={!u.active}>
@@ -347,11 +345,12 @@
                 </td>
                 <td>{u.lastAccess || '—'}</td>
                 <td>
-                  {#if u.active}
-                    <button class="btn small danger" onclick={async () => { await setUserActive(u.discordId, false); allUsers = await listUsers(); message = 'User deactivated.'; }}>Deactivate</button>
-                  {:else}
-                    <button class="btn small primary" onclick={async () => { await setUserActive(u.discordId, true); allUsers = await listUsers(); message = 'User reactivated.'; }}>Reactivate</button>
-                  {/if}
+                  <button class="btn small primary" onclick={() => saveUser(u.discordId)}>Save</button>
+                  <button class="btn small" onclick={async () => {
+                    await setUserActive(u.discordId, !u.active)
+                    allUsers = await listUsers()
+                    message = u.active ? 'User deactivated.' : 'User reactivated.'
+                  }}>{u.active ? 'Deactivate' : 'Reactivate'}</button>
                 </td>
               </tr>
             {/each}
@@ -392,6 +391,9 @@
   .list { width: 100%; border-collapse: collapse; font-size: 13px; }
   .list th { text-align: left; padding: 8px 10px; font-weight: 600; color: #555; border-bottom: 2px solid #eee; }
   .list td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; }
+  .list td input, .list td select { padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+  .list td select { min-width: 90px; }
+  .list td input { width: 100px; }
   .list tr:hover td { background: #f8f9fa; }
   .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
   .badge-active { background: #dcfce7; color: #16a34a; }

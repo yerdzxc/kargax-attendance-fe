@@ -108,6 +108,7 @@
   }
 
   function statusBadge(day: UserAttendance['days'][number]) {
+    if (day.status === 'future') return { cls: 'badge-future', label: '' }
     if (day.status === 'restday') return { cls: 'badge-rest', label: 'RD' }
     if (day.status === 'holiday') return { cls: 'badge-holiday', label: 'H' }
     if (day.status === 'leave') return { cls: `badge-${day.leaveType?.toLowerCase() || 'leave'}`, label: day.leaveType || 'L' }
@@ -178,7 +179,9 @@
             </td>
             {#each user.days as day}
               {@const badge = statusBadge(day)}
-              {#if day.present || day.status === 'late'}
+              {#if day.status === 'future'}
+                <td class="time-cell future" colspan="2">—</td>
+              {:else if day.present || day.status === 'late'}
                 <td class="time-cell in" ondblclick={() => startTimeEdit(user.discordId, day.date, 'in', day.timeIn, day.status === 'late')}>
                   {#if isTimeEditing(user.discordId, day.date, 'in')}
                     <div class="time-edit-popup">

@@ -106,6 +106,7 @@
         const isRestDay = restDayLower === m.dayOfWeek.toLowerCase()
         const isHoliday = holidaySet.has(date)
         const leaveType = userLeaves.get(date)
+        const isFuture = date > new Date().toISOString().split('T')[0]
 
         let present = false
         let status: AttendanceEntry['status'] = 'absent'
@@ -116,6 +117,8 @@
           status = 'holiday'
         } else if (isRestDay) {
           status = 'restday'
+        } else if (isFuture) {
+          status = 'future'
         } else if (rec) {
           present = true
           status = rec.late ? 'late' : 'present'
@@ -227,7 +230,7 @@
 
   const displayedUsers = $derived(
     statusFilter === 'all' ? filteredUsers
-    : statusFilter === 'absent' ? filteredUsers.filter((u) => !u.days.some((d) => d.present))
+    : statusFilter === 'absent' ? filteredUsers.filter((u) => u.days.some((d) => d.status === 'absent'))
     : filteredUsers.filter((u) => u.days.some((d) => d.status === statusFilter))
   )
 

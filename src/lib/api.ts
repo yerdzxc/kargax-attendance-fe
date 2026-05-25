@@ -97,6 +97,14 @@ export async function setPosition(discordId: string, position: string | null): P
   })
 }
 
+export async function setUserType(discordId: string, type: string): Promise<void> {
+  await fetch(`${BASE}/set-type`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ discordId, type }),
+  })
+}
+
 export async function correctTime(discordUserId: string, signatureDate: string, timeIn?: string, timeOut?: string, late?: boolean): Promise<void> {
   await fetch(`${BASE}/correct-time`, {
     method: 'POST',
