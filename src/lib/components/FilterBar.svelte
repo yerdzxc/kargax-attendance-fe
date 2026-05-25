@@ -8,6 +8,7 @@
     onSearch,
     onTypeChange,
     onDateChange,
+    onPreset,
     onDownload,
     onRefresh,
   }: {
@@ -19,6 +20,7 @@
     onSearch: (v: string) => void
     onTypeChange: (v: string) => void
     onDateChange: (from: string, to: string) => void
+    onPreset: (preset: string) => void
     onDownload: () => void
     onRefresh: () => void
   } = $props()
@@ -31,7 +33,19 @@
     const v = (e.target as HTMLInputElement).value
     onDateChange(from, v)
   }
+
+  const presets = [
+    { key: 'this-week', label: 'This Week' },
+    { key: 'last-week', label: 'Last Week' },
+    { key: 'this-month', label: 'This Month' },
+  ]
 </script>
+
+<div class="preset-row">
+  {#each presets as p}
+    <button class="preset-btn" onclick={() => onPreset(p.key)} disabled={loading}>{p.label}</button>
+  {/each}
+</div>
 
 <div class="filter-bar">
   <div class="filter-group">
@@ -151,4 +165,8 @@
   .btn.secondary:hover:not(:disabled) {
     background: #d4d4d4;
   }
+  .preset-row { display: flex; gap: 6px; margin-bottom: 8px; }
+  .preset-btn { padding: 4px 12px; border: 1px solid #ddd; border-radius: 6px; background: white; font-size: 12px; color: #555; cursor: pointer; }
+  .preset-btn:hover:not(:disabled) { border-color: #5865f2; color: #5865f2; }
+  .preset-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>

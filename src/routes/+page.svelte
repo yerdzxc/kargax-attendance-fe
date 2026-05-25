@@ -197,6 +197,33 @@
 
   function handleDateChange(f: string, t: string) { from = f; to = t; load() }
 
+  function handlePreset(preset: string) {
+    const today = new Date()
+    const y = today.getFullYear()
+    const m = today.getMonth()
+    const d = today.getDate()
+    const dayOfWeek = today.getDay()
+    const fmt = (dt: Date) => dt.toISOString().split('T')[0]
+
+    if (preset === 'this-week') {
+      const monday = new Date(today)
+      monday.setDate(d - ((dayOfWeek + 6) % 7))
+      const sunday = new Date(monday)
+      sunday.setDate(monday.getDate() + 6)
+      from = fmt(monday); to = fmt(sunday)
+    } else if (preset === 'last-week') {
+      const monday = new Date(today)
+      monday.setDate(d - ((dayOfWeek + 6) % 7) - 7)
+      const sunday = new Date(monday)
+      sunday.setDate(monday.getDate() + 6)
+      from = fmt(monday); to = fmt(sunday)
+    } else if (preset === 'this-month') {
+      from = fmt(new Date(y, m, 1))
+      to = fmt(new Date(y, m + 1, 0))
+    }
+    load()
+  }
+
   function handleDownload() {
     const rows: string[][] = []
     const h1: string[] = ['NAMES', '']
@@ -295,6 +322,7 @@
       onSearch={handleSearch}
       onTypeChange={handleTypeChange}
       onDateChange={handleDateChange}
+      onPreset={handlePreset}
       onDownload={handleDownload}
       onRefresh={load}
     />
