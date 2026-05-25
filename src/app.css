@@ -12,6 +12,8 @@
   --table-stripe: #f8f9fa;
   --shadow: 0 1px 3px rgba(0,0,0,0.08);
   --link: #5865f2;
+  --today-bg: #e8f0fe;
+  --today-bg-cell: #f0f7ff;
 }
 
 :root.dark {
@@ -28,6 +30,8 @@
   --table-stripe: #1e1f32;
   --shadow: 0 1px 3px rgba(0,0,0,0.3);
   --link: #818cf8;
+  --today-bg: #1a2540;
+  --today-bg-cell: #1e2a45;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

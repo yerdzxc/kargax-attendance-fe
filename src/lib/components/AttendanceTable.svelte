@@ -256,7 +256,7 @@
   th { background: var(--table-stripe); padding: 8px 6px; font-weight: 600; color: var(--text-secondary); text-align: center; border-bottom: 2px solid var(--border); white-space: nowrap; }
   th.name { text-align: left; padding-left: 16px; min-width: 200px; position: sticky; left: 0; background: var(--table-stripe); z-index: 3; }
   th.weekend { background: var(--bg-hover); }
-  th.today-hl { background: #e8f0fe; border-bottom-color: #5865f2; }
+  th.today-hl { background: var(--today-bg); border-bottom-color: #5865f2; }
   th.today-hl .date-num { color: #5865f2; font-weight: 800; }
   .hint { font-weight: 400; font-size: 10px; color: var(--text-muted); }
   .date .day { display: block; font-size: 10px; color: var(--text-secondary); }
@@ -273,7 +273,7 @@
   .name-input { width: 100%; padding: 4px 6px; border: 2px solid #5865f2; border-radius: 4px; font-size: 13px; font-weight: 500; outline: none; background: var(--bg-input); }
   .day-cell { min-width: 100px; position: relative; }
   .day-cell.weekend { background: var(--bg-hover); }
-  .day-cell.today-hl { background: #f0f7ff; }
+  .day-cell.today-hl { background: var(--today-bg-cell); }
   .day-cell.future { color: var(--text-muted); }
   .time-display { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
   .time-display:hover { background: var(--bg-hover); }
